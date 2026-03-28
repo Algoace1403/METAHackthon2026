@@ -1,0 +1,22 @@
+
+--- Task: easy_contacts ---
+  Reset OK: 8 rows, 8 columns
+  fix_value step OK: reward=-0.0605
+  mark_complete OK: score=0.4179
+  PASS: score 0.4179 in [0.0, 1.0]
+
+--- Task: medium_employees ---
+  Reset OK: 20 rows, 11 columns
+  fix_value step OK: reward=-0.0905
+  mark_complete OK: score=0.4094
+  PASS: score 0.4094 in [0.0, 1.0]
+
+--- Task: hard_patients ---
+  Reset OK: 39 rows, 15 columns
+  fix_value step OK: reward=-0.081
+  mark_complete OK: score=0.4099
+  PASS: score 0.4099 in [0.0, 1.0]
+
+Completed in 0.02s
+
+All smoke tests PASSED.
