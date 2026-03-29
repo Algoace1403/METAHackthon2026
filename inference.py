@@ -37,10 +37,12 @@ API_BASE_URL: str = os.environ.get("API_BASE_URL", "")
 MODEL_NAME: str = os.environ.get("MODEL_NAME", "")
 HF_TOKEN: str = os.environ.get("HF_TOKEN", "")
 
-# URL of the DataClean-Env HF Space (fill in your deployed Space URL)
+# URL of the DataClean-Env environment server.
+# The validator may set ENV_BASE_URL, or we fall back to localhost.
+# IMPORTANT: Update the fallback URL to your deployed HF Space before submission.
 ENV_BASE_URL: str = os.environ.get(
     "ENV_BASE_URL",
-    "",
+    "http://localhost:8000",
 )
 
 TASKS: List[str] = ["easy_contacts", "medium_employees", "hard_patients"]
@@ -383,10 +385,8 @@ def main() -> int:
     if not HF_TOKEN:
         print("ERROR: HF_TOKEN environment variable is not set")
         return 1
-    if not ENV_BASE_URL or "YOUR-HF-SPACE" in ENV_BASE_URL:
-        print("ERROR: ENV_BASE_URL is not set or still contains placeholder")
-        print("  Set ENV_BASE_URL to your deployed HF Space URL")
-        return 1
+
+    print(f"Environment URL: {ENV_BASE_URL}")
 
     # Set global timeout (Unix only; no-op on Windows)
     if hasattr(signal, "SIGALRM"):
