@@ -4,6 +4,8 @@ Uses OpenEnv's create_app() to auto-generate all required endpoints:
 /health, /metadata, /schema, /reset, /step, /state, /ws, /mcp, /docs
 """
 
+import os
+
 from openenv.core.env_server.http_server import create_app
 
 from dataclean_env.models import DataCleanAction, DataCleanObservation
@@ -14,7 +16,7 @@ app = create_app(
     DataCleanAction,
     DataCleanObservation,
     env_name="dataclean_env",
-    max_concurrent_envs=1,
+    max_concurrent_envs=int(os.environ.get("MAX_CONCURRENT_ENVS", "1")),
 )
 
 

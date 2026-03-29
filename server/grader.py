@@ -663,8 +663,9 @@ class DataCleanGrader:
     ) -> Dict[str, float]:
         """Compute average of value_col grouped by group_col.
 
-        If transform == 'year_age_2024', interpret value_col as a date string
-        and compute age as (2024 - birth_year).
+        If transform starts with 'year_age_', interpret value_col as a date
+        string and compute age as (reference_year - birth_year). The reference
+        year is extracted from the transform name (e.g., 'year_age_2026' uses 2026).
         """
         groups: Dict[str, List[float]] = {}
         for row in data:
@@ -675,11 +676,12 @@ class DataCleanGrader:
 
             group_key = str(group_val).strip()
 
-            if transform == "year_age_2024":
+            if transform and transform.startswith("year_age_"):
                 try:
+                    reference_year = int(transform.split("_")[-1])
                     if isinstance(raw_val, str):
                         year = int(raw_val.strip()[:4])
-                        numeric_val = float(2024 - year)
+                        numeric_val = float(reference_year - year)
                     else:
                         continue
                 except (ValueError, IndexError):

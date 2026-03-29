@@ -1955,10 +1955,10 @@ _HARD_PROBES: list[UtilityProbe] = [
     ),
     UtilityProbe(
         name="avg_age_by_gender",
-        description="Average age (2024 - birth year) grouped by gender",
+        description="Average age (2026 - birth year) grouped by gender",
         query_fn="avg_by_group",
-        params={"value_col": "dob", "group_col": "gender", "transform": "year_age_2024"},
-        expected_result={"F": 46.13, "M": 50.27},
+        params={"value_col": "dob", "group_col": "gender", "transform": "year_age_2026"},
+        expected_result={"F": 48.13, "M": 52.27},
     ),
 ]
 

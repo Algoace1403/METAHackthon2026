@@ -157,6 +157,10 @@ def _build_observation(obs_data: Dict[str, Any]) -> DataCleanObservation:
         task_id=obs_data.get("task_id", ""),
         task_name=obs_data.get("task_name", ""),
         difficulty=obs_data.get("difficulty", ""),
+        # Budget fields
+        budget_spent=obs_data.get("budget_spent", 0.0),
+        budget_remaining=obs_data.get("budget_remaining", 100.0),
+        action_costs=obs_data.get("action_costs", {}),
         # Inherited Observation fields
         done=obs_data.get("done", False),
         reward=obs_data.get("reward"),

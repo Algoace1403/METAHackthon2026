@@ -40,7 +40,7 @@ HF_TOKEN: str = os.environ.get("HF_TOKEN", "")
 # URL of the DataClean-Env HF Space (fill in your deployed Space URL)
 ENV_BASE_URL: str = os.environ.get(
     "ENV_BASE_URL",
-    "https://YOUR-HF-SPACE-URL.hf.space",
+    "",
 )
 
 TASKS: List[str] = ["easy_contacts", "medium_employees", "hard_patients"]

@@ -84,6 +84,12 @@ DIFFICULTY_BUDGETS: Dict[str, float] = {
     "hard": 200.0,
 }
 
+# Per-step penalty in delta reward computation
+STEP_COST: float = 0.005
+
+# Default seed when none provided (deterministic fallback)
+DEFAULT_SEED: int = 42
+
 
 class DataCleanEnvironment(
     Environment[DataCleanAction, DataCleanObservation, DataCleanState]
@@ -109,7 +115,7 @@ class DataCleanEnvironment(
         task_id = kwargs.get("task_id", "easy_contacts")
         task = get_task(task_id)
 
-        actual_seed = seed if seed is not None else 42
+        actual_seed = seed if seed is not None else DEFAULT_SEED
 
         from dataclean_env.server.data_generator import generate_dirty_data
 
@@ -228,7 +234,7 @@ class DataCleanEnvironment(
 
         Penalizes no-ops and errors explicitly.
         """
-        step_cost = 0.005
+        step_cost = STEP_COST
 
         # Explicit penalties for bad actions
         if action_result.get("status") == "error":
@@ -537,7 +543,8 @@ class DataCleanEnvironment(
         msg = f"Cast {modified} cell(s) in '{column}' to {target_type}"
         if nullified:
             msg += f" ({nullified} failed -> null)"
-        return {"action": "cast_type", "status": "success",
+        status = "success" if modified > 0 else ("error" if nullified > 0 else "no_effect")
+        return {"action": "cast_type", "status": status,
                 "message": msg, "cells_modified": modified + nullified}
 
     def _action_mark_complete(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -704,9 +711,10 @@ class DataCleanEnvironment(
         quality_issues = self._analyze_quality()
         issue_groups = self._group_issues(quality_issues)
 
-        # Data summary
+        # Data summary — count nulls using INTERNAL column names (not aliases)
+        internal_cols = [c for c in columns if c not in hidden and c != "_row_id"]
         null_count = sum(
-            1 for row in data for col in visible_columns
+            1 for row in data for col in internal_cols
             if row.get(col) is None
         )
         data_summary = DataSummary(
