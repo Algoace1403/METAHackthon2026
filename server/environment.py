@@ -281,6 +281,29 @@ class DataCleanEnvironment(
     # Action Dispatch
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _normalize_action_params(action_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize common LLM param aliases to canonical names."""
+        p = dict(params)
+        # Universal aliases
+        if "row" in p and "row_id" not in p:
+            p["row_id"] = p.pop("row")
+        if "col" in p and "column" not in p:
+            p["column"] = p.pop("col")
+        # Action-specific aliases
+        if action_type == "fix_value" and "value" in p and "new_value" not in p:
+            p["new_value"] = p.pop("value")
+        if action_type == "merge_duplicates":
+            if "row_id_1" in p and "row_id1" not in p:
+                p["row_id1"] = p.pop("row_id_1")
+            if "row_id_2" in p and "row_id2" not in p:
+                p["row_id2"] = p.pop("row_id_2")
+            if "row1" in p and "row_id1" not in p:
+                p["row_id1"] = p.pop("row1")
+            if "row2" in p and "row_id2" not in p:
+                p["row_id2"] = p.pop("row2")
+        return p
+
     def _execute_action(self, action: DataCleanAction) -> Dict[str, Any]:
         """Dispatch action to the appropriate handler."""
         handler = getattr(self, f"_action_{action.action_type}", None)
@@ -291,8 +314,10 @@ class DataCleanEnvironment(
                 "message": f"Unknown action type: {action.action_type}",
                 "cells_modified": 0,
             }
+        # Normalize param aliases before dispatching
+        normalized_params = self._normalize_action_params(action.action_type, action.params)
         try:
-            return handler(action.params)
+            return handler(normalized_params)
         except (KeyError, TypeError, IndexError) as exc:
             return {
                 "action": action.action_type,

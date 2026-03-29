@@ -198,17 +198,30 @@ def _normalize_params(action_type: str, params: Dict[str, Any]) -> Dict[str, Any
     """
     p = dict(params)
 
+    # Universal aliases — LLMs commonly use these instead of canonical names
+    if "row" in p and "row_id" not in p:
+        p["row_id"] = p.pop("row")
+    if "col" in p and "column" not in p:
+        p["column"] = p.pop("col")
+
     if action_type == "fix_value":
-        # Map 'value' -> 'new_value' (only when 'new_value' is absent)
         if "value" in p and "new_value" not in p:
             p["new_value"] = p.pop("value")
 
+    elif action_type == "fill_missing":
+        # fill_missing uses "value" canonically, but some LLMs send "fill_value"
+        if "fill_value" in p and "value" not in p:
+            p["value"] = p.pop("fill_value")
+
     elif action_type == "merge_duplicates":
-        # Map 'row_id_1' -> 'row_id1', 'row_id_2' -> 'row_id2'
         if "row_id_1" in p and "row_id1" not in p:
             p["row_id1"] = p.pop("row_id_1")
         if "row_id_2" in p and "row_id2" not in p:
             p["row_id2"] = p.pop("row_id_2")
+        if "row1" in p and "row_id1" not in p:
+            p["row_id1"] = p.pop("row1")
+        if "row2" in p and "row_id2" not in p:
+            p["row_id2"] = p.pop("row2")
 
     return p
 
