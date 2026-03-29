@@ -103,7 +103,10 @@ class DataCleanEnvironment(
         self._state = DataCleanState()
         self._grader = DataCleanGrader()
         self._utility_probes: list = []
+        self._ambiguous_cells: list = []
+        self._task_name: str = ""
         self._last_grade_result = None
+        self._next_row_id: int = 0
 
     def reset(
         self,
@@ -113,7 +116,12 @@ class DataCleanEnvironment(
     ) -> DataCleanObservation:
         """Initialize a new data cleaning episode."""
         task_id = kwargs.get("task_id", "easy_contacts")
-        task = get_task(task_id)
+        try:
+            task = get_task(task_id)
+        except (KeyError, ValueError):
+            # Fallback to easy task if unknown task_id provided
+            task_id = "easy_contacts"
+            task = get_task(task_id)
 
         actual_seed = seed if seed is not None else DEFAULT_SEED
 
@@ -179,6 +187,12 @@ class DataCleanEnvironment(
         **kwargs: Any,
     ) -> DataCleanObservation:
         """Process one cleaning action. Returns observation with delta reward."""
+        # Guard: episode already ended
+        if self._state.is_complete:
+            return self._build_observation(
+                reward=0.0, done=True,
+            )
+
         self._state.step_count += 1
 
         # Execute the action
@@ -516,6 +530,9 @@ class DataCleanEnvironment(
         if data and new_name in data[0]:
             return {"action": "rename_column", "status": "error",
                     "message": f"Column '{new_name}' already exists", "cells_modified": 0}
+        if new_name.startswith("_"):
+            return {"action": "rename_column", "status": "error",
+                    "message": f"Column names starting with '_' are reserved", "cells_modified": 0}
 
         for row in data:
             if old_name in row:
@@ -526,6 +543,11 @@ class DataCleanEnvironment(
     def _action_cast_type(self, params: Dict[str, Any]) -> Dict[str, Any]:
         column = str(params["column"])
         target_type = str(params["target_type"])
+        valid_types = {"int", "float", "str", "bool", "date"}
+        if target_type not in valid_types:
+            return {"action": "cast_type", "status": "error",
+                    "message": f"Unknown type '{target_type}'. Valid: {sorted(valid_types)}",
+                    "cells_modified": 0}
         data = self._state.current_data
         modified = 0
         nullified = 0
