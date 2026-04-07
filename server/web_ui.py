@@ -319,7 +319,7 @@ def build_ui() -> gr.Blocks:
                 data_table = gr.Dataframe(
                     interactive=False,
                     wrap=True,
-                    max_rows=30,
+                    row_count=30,
                 )
 
                 with gr.Row():
@@ -328,14 +328,14 @@ def build_ui() -> gr.Blocks:
                         issues_table = gr.Dataframe(
                             interactive=False,
                             wrap=True,
-                            max_rows=15,
+                            row_count=15,
                         )
                     with gr.Column(scale=1):
                         gr.Markdown("### Action History")
                         history_table = gr.Dataframe(
                             interactive=False,
                             wrap=True,
-                            max_rows=10,
+                            row_count=10,
                         )
 
         # ---- Wiring ----
