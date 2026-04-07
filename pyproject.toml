@@ -18,6 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0.0", "pytest-cov>=4.0.0"]
+train = ["trl>=0.16.0", "transformers>=5.2.0", "torch>=2.0.0", "accelerate>=0.30.0", "datasets>=2.0.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

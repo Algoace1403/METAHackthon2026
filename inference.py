@@ -55,12 +55,12 @@ GLOBAL_TIMEOUT_SECONDS: int = 1100  # 18.3 min safety margin
 # Timeout handler
 # ---------------------------------------------------------------------------
 
-class TimeoutError(Exception):
+class GlobalTimeoutError(Exception):
     pass
 
 
 def _timeout_handler(signum: int, frame: Any) -> None:
-    raise TimeoutError("Global timeout reached")
+    raise GlobalTimeoutError("Global timeout reached")
 
 
 # ---------------------------------------------------------------------------
@@ -131,11 +131,16 @@ def _build_user_prompt(obs: DataCleanObservation) -> str:
     """Build the per-step user prompt from the observation."""
     parts: List[str] = []
 
-    # Step info
+    # Step info and budget
     parts.append(
         f"## Step {obs.step_number} / {obs.max_steps} "
         f"({obs.steps_remaining} remaining)"
     )
+    if hasattr(obs, 'budget_remaining') and obs.budget_remaining is not None:
+        parts.append(
+            f"- Budget: {obs.budget_remaining:.1f} / "
+            f"{obs.budget_remaining + (obs.budget_spent or 0):.1f} remaining"
+        )
 
     # Data summary
     ds = obs.data_summary
@@ -283,8 +288,8 @@ def _parse_action(response_text: str) -> DataCleanAction:
             pass
 
     # Fallback
-    print(f"  [WARN] Could not parse LLM response, falling back to mark_complete")
-    print(f"  [WARN] Raw response: {text[:200]}")
+    print(f"  [WARN] Could not parse LLM response, falling back to mark_complete", file=sys.stderr)
+    print(f"  [WARN] Raw response: {text[:200]}", file=sys.stderr)
     return DataCleanAction(action_type="mark_complete", params={})
 
 
@@ -308,12 +313,12 @@ def _call_llm(
         content = response.choices[0].message.content
         return content if content is not None else ""
     except Exception as e:
-        print(f"  [ERROR] LLM call failed: {e}")
+        print(f"  [ERROR] LLM call failed: {e}", file=sys.stderr)
         if retry:
-            print("  [INFO] Retrying once...")
+            print("  [INFO] Retrying once...", file=sys.stderr)
             time.sleep(1)
             return _call_llm(client, messages, retry=False)
-        print("  [WARN] Retry failed, using fallback action")
+        print("  [WARN] Retry failed, using fallback action", file=sys.stderr)
         return '{"action_type": "mark_complete", "params": {}}'
 
 
@@ -328,23 +333,24 @@ def run_task(
     task_id: str,
 ) -> float:
     """Run a single data-cleaning task and return the final score."""
-    print(f"\n{'='*60}")
-    print(f"  Task: {task_id}")
-    print(f"{'='*60}")
+    print(f"\n{'='*60}", file=sys.stderr)
+    print(f"  Task: {task_id}", file=sys.stderr)
+    print(f"{'='*60}", file=sys.stderr)
 
     with DataCleanEnv(base_url=env_base_url).sync() as env:
         result = env.reset(seed=SEED, task_id=task_id)
         obs: DataCleanObservation = result.observation
 
-        print(f"  Initial issues: {obs.data_summary.issue_count}")
-        print(f"  Max steps: {obs.max_steps}")
+        print(f"  Initial issues: {obs.data_summary.issue_count}", file=sys.stderr)
+        print(f"  Max steps: {obs.max_steps}", file=sys.stderr)
 
         messages: List[Dict[str, str]] = [
             {"role": "system", "content": SYSTEM_PROMPT},
         ]
 
         step = 0
-        while not obs.done:
+        done = False
+        while not done:
             step += 1
             user_msg = _build_user_prompt(obs)
             messages.append({"role": "user", "content": user_msg})
@@ -359,25 +365,26 @@ def run_task(
             action = _parse_action(llm_response)
             print(
                 f"  Step {step}: {action.action_type} "
-                f"{json.dumps(action.params) if action.params else ''}"
+                f"{json.dumps(action.params) if action.params else ''}",
+                file=sys.stderr,
             )
 
             try:
                 result = env.step(action)
                 obs = result.observation
+                done = result.done
             except Exception as e:
-                print(f"  [ERROR] Environment step failed: {e}")
-                traceback.print_exc()
-                continue
+                print(f"  [ERROR] Environment step failed: {e}", file=sys.stderr)
+                traceback.print_exc(file=sys.stderr)
+                # Break on env error to avoid stale obs reuse
+                break
 
-        # Extract final score from reward or metadata
+        # Extract final score from reward
         score = 0.0
-        if result.reward is not None:
+        if result is not None and result.reward is not None:
             score = float(result.reward)
-        elif obs.metadata and "score" in obs.metadata:
-            score = float(obs.metadata["score"])
 
-        print(f"  Final score: {score:.4f}")
+        print(f"  Final score: {score:.4f}", file=sys.stderr)
         return score
 
 
@@ -390,16 +397,16 @@ def main() -> int:
     """Run all tasks and print results."""
     # Validate environment variables
     if not API_BASE_URL:
-        print("ERROR: API_BASE_URL environment variable is not set")
+        print("ERROR: API_BASE_URL environment variable is not set", file=sys.stderr)
         return 1
     if not MODEL_NAME:
-        print("ERROR: MODEL_NAME environment variable is not set")
+        print("ERROR: MODEL_NAME environment variable is not set", file=sys.stderr)
         return 1
     if not HF_TOKEN:
-        print("ERROR: HF_TOKEN environment variable is not set")
+        print("ERROR: HF_TOKEN environment variable is not set", file=sys.stderr)
         return 1
 
-    print(f"Environment URL: {ENV_BASE_URL}")
+    print(f"Environment URL: {ENV_BASE_URL}", file=sys.stderr)
 
     # Set global timeout (Unix only; no-op on Windows)
     if hasattr(signal, "SIGALRM"):
@@ -412,11 +419,11 @@ def main() -> int:
         api_key=HF_TOKEN,
     )
 
-    print(f"LLM endpoint: {API_BASE_URL}")
-    print(f"Model: {MODEL_NAME}")
-    print(f"Environment: {ENV_BASE_URL}")
-    print(f"Tasks: {TASKS}")
-    print(f"Seed: {SEED}, Temperature: {TEMPERATURE}")
+    print(f"LLM endpoint: {API_BASE_URL}", file=sys.stderr)
+    print(f"Model: {MODEL_NAME}", file=sys.stderr)
+    print(f"Environment: {ENV_BASE_URL}", file=sys.stderr)
+    print(f"Tasks: {TASKS}", file=sys.stderr)
+    print(f"Seed: {SEED}, Temperature: {TEMPERATURE}", file=sys.stderr)
 
     scores: Dict[str, float] = {}
 
@@ -424,13 +431,13 @@ def main() -> int:
         try:
             score = run_task(client, ENV_BASE_URL, task_id)
             scores[task_id] = score
-        except TimeoutError:
-            print(f"\n[TIMEOUT] Global timeout reached during task '{task_id}'")
+        except GlobalTimeoutError:
+            print(f"\n[TIMEOUT] Global timeout reached during task '{task_id}'", file=sys.stderr)
             scores[task_id] = 0.0
             break
         except Exception as e:
-            print(f"\n[ERROR] Task '{task_id}' failed: {e}")
-            traceback.print_exc()
+            print(f"\n[ERROR] Task '{task_id}' failed: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
             scores[task_id] = 0.0
 
     # Cancel alarm if still active
@@ -440,14 +447,14 @@ def main() -> int:
     # Print results
     avg_score = sum(scores.values()) / len(scores) if scores else 0.0
 
-    print(f"\n{'='*60}")
-    print("  RESULTS")
-    print(f"{'='*60}")
+    print(f"\n{'='*60}", file=sys.stderr)
+    print("  RESULTS", file=sys.stderr)
+    print(f"{'='*60}", file=sys.stderr)
     for task_id, score in scores.items():
-        print(f"  {task_id}: {score:.4f}")
-    print(f"  ---")
-    print(f"  Average: {avg_score:.4f}")
-    print(f"{'='*60}")
+        print(f"  {task_id}: {score:.4f}", file=sys.stderr)
+    print(f"  ---", file=sys.stderr)
+    print(f"  Average: {avg_score:.4f}", file=sys.stderr)
+    print(f"{'='*60}", file=sys.stderr)
 
     # JSON output block for validator parsing
     output = {

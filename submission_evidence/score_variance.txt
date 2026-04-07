@@ -4,11 +4,12 @@ Score Variance Table
 =======================================================================================================
 Strategy                easy_contacts      medium_employees         hard_patients                  Mean
 -------------------------------------------------------------------------------------------------------
-no-op                          0.4734                0.4949                0.4859                0.4847
-random                         0.0118                0.0230                0.0000                0.0116
-format-only                    0.4741                0.4935                0.4674                0.4783
+no-op                          0.2000                0.1647                0.1360                0.1669
+random                         0.0000                0.0000                0.0000                0.0000
+format-only                    0.3000                0.2504                0.1360                0.2288
+heuristic                      0.4860                0.3647                0.2340                0.3616
 oracle                         1.0000                1.0000                1.0000                1.0000
 -------------------------------------------------------------------------------------------------------
 
-Expected: oracle ~ 1.0, no-op < oracle, random < oracle, format-only in between.
+Expected ordering: no-op < 0.15, random ~ 0, format-only > no-op, heuristic > format-only, oracle ~ 1.0
 If oracle is not near 1.0, check that ground truth data and grader are aligned.

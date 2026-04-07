@@ -45,11 +45,10 @@ def test_reset_no_kwargs():
 
 
 def test_reset_unknown_task_id():
-    """Unknown task_id should fallback to easy_contacts, not crash."""
+    """Unknown task_id should raise KeyError, not silently fallback."""
     env = DataCleanEnvironment()
-    obs = env.reset(task_id="nonexistent_task_xyz")
-    assert obs.done is False
-    assert obs.task_id == "easy_contacts"  # graceful fallback
+    with pytest.raises(KeyError, match="nonexistent_task_xyz"):
+        env.reset(task_id="nonexistent_task_xyz")
 
 
 def test_reset_negative_seed():
@@ -366,17 +365,23 @@ def test_max_steps_boundary():
     assert obs3.reward is not None
 
 
-def test_budget_goes_negative():
-    """Budget can go below 0 without crashing."""
+def test_budget_enforcement():
+    """Actions are rejected when budget is exhausted."""
     env, obs = _reset_env()
     # Set a tiny budget
     env._state.action_budget = 1.0
     env._state.budget_remaining = 1.0
-    # delete_row costs 6.0, which will push budget below 0
+    # delete_row costs 6.0 — should be rejected
     first_row_id = obs.rows[0][0]
     obs2 = env.step(_make_action("delete_row", row_id=first_row_id))
-    assert obs2.last_action_result.status == "success"
-    assert obs2.budget_remaining < 0
+    assert obs2.last_action_result.status == "error"
+    assert "Budget exhausted" in obs2.last_action_result.message
+    # Budget should not have changed
+    assert obs2.budget_remaining == 1.0
+    # Cheap actions should still work (fix_value costs 1.0)
+    obs3 = env.step(_make_action("fix_value", row_id=first_row_id,
+                                  column="first_name", new_value="Test"))
+    assert obs3.last_action_result.status == "success"
 
 
 def test_empty_dataset_observation():

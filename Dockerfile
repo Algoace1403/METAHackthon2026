@@ -17,8 +17,8 @@ RUN pip install --no-cache-dir \
 # Copy environment code
 COPY --chown=user . /app
 
-# Install the package
-RUN pip install --no-cache-dir -e .
+# Install the package (non-editable, as root for system site-packages)
+RUN pip install --no-cache-dir .
 
 # Switch to non-root user
 USER user

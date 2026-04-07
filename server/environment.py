@@ -13,7 +13,11 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+import logging
+
 from openenv.core.env_server import Environment
+
+logger = logging.getLogger(__name__)
 
 from dataclean_env.models import (
     ActionResult,
@@ -81,7 +85,7 @@ ACTION_COSTS: Dict[str, float] = {
 DIFFICULTY_BUDGETS: Dict[str, float] = {
     "easy": 50.0,
     "medium": 100.0,
-    "hard": 200.0,
+    "hard": 150.0,
 }
 
 # Per-step penalty in delta reward computation
@@ -116,12 +120,7 @@ class DataCleanEnvironment(
     ) -> DataCleanObservation:
         """Initialize a new data cleaning episode."""
         task_id = kwargs.get("task_id", "easy_contacts")
-        try:
-            task = get_task(task_id)
-        except (KeyError, ValueError):
-            # Fallback to easy task if unknown task_id provided
-            task_id = "easy_contacts"
-            task = get_task(task_id)
+        task = get_task(task_id)  # raises KeyError/ValueError on unknown task_id
 
         actual_seed = seed if seed is not None else DEFAULT_SEED
 
@@ -168,6 +167,7 @@ class DataCleanEnvironment(
             max_steps=task.max_steps,
             is_complete=False,
             previous_score=initial_score,
+            initial_raw_score=initial_score,
             action_budget=budget,
             budget_spent=0.0,
             budget_remaining=budget,
@@ -195,12 +195,26 @@ class DataCleanEnvironment(
 
         self._state.step_count += 1
 
+        # Enforce budget: reject actions (except mark_complete) when exhausted
+        cost = ACTION_COSTS.get(action.action_type, 1.0)
+        if cost > 0 and self._state.budget_remaining < cost:
+            result = {
+                "action": action.action_type,
+                "status": "error",
+                "message": f"Budget exhausted ({self._state.budget_remaining:.1f} remaining, "
+                           f"action costs {cost:.1f})",
+                "cells_modified": 0,
+            }
+            self._state.action_log.append(result)
+            return self._build_observation(
+                reward=-0.01, done=False,
+            )
+
         # Execute the action
         result = self._execute_action(action)
         self._state.action_log.append(result)
 
         # Deduct action cost from budget
-        cost = ACTION_COSTS.get(action.action_type, 1.0)
         self._state.budget_spent += cost
         self._state.budget_remaining -= cost
 
@@ -248,8 +262,6 @@ class DataCleanEnvironment(
 
         Penalizes no-ops and errors explicitly.
         """
-        step_cost = STEP_COST
-
         # Explicit penalties for bad actions
         if action_result.get("status") == "error":
             return -0.02
@@ -258,7 +270,8 @@ class DataCleanEnvironment(
         if action_result.get("cells_modified", 0) == 0 and action_result.get("action") not in ("flag_anomaly", "escalate_to_human"):
             return -0.01
 
-        # Compute current score
+        # Compute current score (raw, without normalization — delta is relative
+        # so the baseline cancels out; normalization only at terminal grading)
         current_score = self._grader.grade(
             final_data=self._state.current_data,
             ground_truth=self._state.ground_truth,
@@ -273,7 +286,7 @@ class DataCleanEnvironment(
             utility_probes=self._utility_probes,
         ).score
 
-        delta = current_score - self._state.previous_score - step_cost
+        delta = current_score - self._state.previous_score - STEP_COST
         self._state.previous_score = current_score
         return round(delta, 4)
 
@@ -326,6 +339,7 @@ class DataCleanEnvironment(
                 "cells_modified": 0,
             }
         except Exception as exc:
+            logger.exception("Unexpected error in action handler %s", action.action_type)
             return {
                 "action": action.action_type,
                 "status": "error",
@@ -563,7 +577,8 @@ class DataCleanEnvironment(
             if old_name in row:
                 row[new_name] = row.pop(old_name)
         return {"action": "rename_column", "status": "success",
-                "message": f"Renamed '{old_name}' -> '{new_name}'", "cells_modified": 0}
+                "message": f"Renamed '{old_name}' -> '{new_name}'",
+                "cells_modified": len(data)}
 
     def _action_cast_type(self, params: Dict[str, Any]) -> Dict[str, Any]:
         column = str(params["column"])

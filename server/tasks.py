@@ -1342,6 +1342,361 @@ _HARD_GROUND_TRUTH: list[dict[str, Any]] = [
         "insurance_id": "UH-7741926",
         "last_visit_date": "2023-10-31",
     },
+    # --- NEW PATIENTS (PAT031-PAT050) ---
+    # --- GENDER-NEUTRAL NAME TRAP: Morgan (M) ---
+    {
+        "_entity_id": "PAT031",
+        "patient_id": 31,
+        "first_name": "Morgan",
+        "last_name": "Fletcher",
+        "dob": "1986-04-12",
+        "gender": "M",
+        "phone": "253-555-3201",
+        "email": "morgan.fletcher86@gmail.com",
+        "address_line": "1900 Pacific Ave",
+        "city": "Tacoma",
+        "state": "WA",
+        "zip": "98402",
+        "insurance_provider": "Cigna",
+        "insurance_id": "CI-7712548",
+        "last_visit_date": "2024-03-22",
+    },
+    # --- FALSE POSITIVE PAIR 3: Two "David Kim" (PAT032 & PAT033) ---
+    {
+        "_entity_id": "PAT032",
+        "patient_id": 32,
+        "first_name": "David",
+        "last_name": "Kim",
+        "dob": "1988-07-20",
+        "gender": "M",
+        "phone": "425-555-3312",
+        "email": "david.kim88@gmail.com",
+        "address_line": "300 108th Ave NE",
+        "city": "Bellevue",
+        "state": "WA",
+        "zip": "98004",
+        "insurance_provider": "UnitedHealth",
+        "insurance_id": "UH-4423891",
+        "last_visit_date": "2024-05-18",
+    },
+    {
+        "_entity_id": "PAT033",
+        "patient_id": 33,
+        "first_name": "David",
+        "last_name": "Kim",
+        "dob": "1990-11-03",
+        "gender": "M",
+        "phone": "206-555-3423",
+        "email": "dkim90@outlook.com",
+        "address_line": "815 Pine St",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98101",
+        "insurance_provider": "UnitedHealth",
+        "insurance_id": "UH-6638172",
+        "last_visit_date": "2024-01-29",
+    },
+    # --- DUPLICATE CLUSTER: Christopher -> typo variants (PAT034) ---
+    {
+        "_entity_id": "PAT034",
+        "patient_id": 34,
+        "first_name": "Christopher",
+        "last_name": "Reeves",
+        "dob": "1976-08-25",
+        "gender": "M",
+        "phone": "813-555-3534",
+        "email": "christopher.reeves@gmail.com",
+        "address_line": "1400 N Dale Mabry Hwy",
+        "city": "Tampa",
+        "state": "FL",
+        "zip": "33607",
+        "insurance_provider": "Blue Cross",
+        "insurance_id": "BC-5547832",
+        "last_visit_date": "2024-06-05",
+    },
+    # --- GENDER-NEUTRAL NAME TRAP: Avery (M) ---
+    {
+        "_entity_id": "PAT035",
+        "patient_id": 35,
+        "first_name": "Avery",
+        "last_name": "Simmons",
+        "dob": "1994-02-17",
+        "gender": "M",
+        "phone": "678-555-3645",
+        "email": "avery.simmons94@yahoo.com",
+        "address_line": "2500 Peachtree Rd NW",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30305",
+        "insurance_provider": "Aetna",
+        "insurance_id": "AE-3318724",
+        "last_visit_date": "2023-11-15",
+    },
+    # --- FALSE POSITIVE PAIR 4: Two "Sarah Williams" (PAT036 & PAT037) ---
+    {
+        "_entity_id": "PAT036",
+        "patient_id": 36,
+        "first_name": "Sarah",
+        "last_name": "Williams",
+        "dob": "1983-09-14",
+        "gender": "F",
+        "phone": "312-555-3756",
+        "email": "sarah.williams83@gmail.com",
+        "address_line": "55 E Monroe St",
+        "city": "Chicago",
+        "state": "IL",
+        "zip": "60603",
+        "insurance_provider": "Blue Cross",
+        "insurance_id": "BC-8834291",
+        "last_visit_date": "2024-04-01",
+    },
+    {
+        "_entity_id": "PAT037",
+        "patient_id": 37,
+        "first_name": "Sarah",
+        "last_name": "Williams",
+        "dob": "1978-03-22",
+        "gender": "F",
+        "phone": "773-555-3867",
+        "email": "swilliams78@yahoo.com",
+        "address_line": "4700 N Lincoln Ave",
+        "city": "Chicago",
+        "state": "IL",
+        "zip": "60625",
+        "insurance_provider": "Cigna",
+        "insurance_id": "CI-2247163",
+        "last_visit_date": "2023-07-19",
+    },
+    # --- DUPLICATE CLUSTER: Alexandra -> misspelling variant (PAT038) ---
+    {
+        "_entity_id": "PAT038",
+        "patient_id": 38,
+        "first_name": "Alexandra",
+        "last_name": "Petrov",
+        "dob": "1991-06-08",
+        "gender": "F",
+        "phone": "480-555-3978",
+        "email": "alexandra.petrov@gmail.com",
+        "address_line": "7100 E Camelback Rd",
+        "city": "Scottsdale",
+        "state": "AZ",
+        "zip": "85251",
+        "insurance_provider": "UnitedHealth",
+        "insurance_id": "UH-9917453",
+        "last_visit_date": "2024-02-20",
+    },
+    # --- GENDER-NEUTRAL NAME TRAP: Casey (F) ---
+    {
+        "_entity_id": "PAT039",
+        "patient_id": 39,
+        "first_name": "Casey",
+        "last_name": "Morgan",
+        "dob": "2000-01-30",
+        "gender": "F",
+        "phone": "720-555-4089",
+        "email": "casey.morgan00@outlook.com",
+        "address_line": "1600 Stout St",
+        "city": "Denver",
+        "state": "CO",
+        "zip": "80202",
+        "insurance_provider": "Medicare",
+        "insurance_id": "MC-7724316",
+        "last_visit_date": "2024-08-10",
+    },
+    # --- DUPLICATE CLUSTER: Patricia -> typo variants (PAT040) ---
+    {
+        "_entity_id": "PAT040",
+        "patient_id": 40,
+        "first_name": "Patricia",
+        "last_name": "Hernandez",
+        "dob": "1969-12-04",
+        "gender": "F",
+        "phone": "520-555-4190",
+        "email": "patricia.hernandez@gmail.com",
+        "address_line": "150 N Stone Ave",
+        "city": "Tucson",
+        "state": "AZ",
+        "zip": "85701",
+        "insurance_provider": "Aetna",
+        "insurance_id": "AE-6641258",
+        "last_visit_date": "2024-01-17",
+    },
+    {
+        "_entity_id": "PAT041",
+        "patient_id": 41,
+        "first_name": "Gregory",
+        "last_name": "Adams",
+        "dob": "1957-03-19",
+        "gender": "M",
+        "phone": "860-555-4201",
+        "email": "gregory.adams57@aol.com",
+        "address_line": "250 Constitution Plaza",
+        "city": "Hartford",
+        "state": "CT",
+        "zip": "06103",
+        "insurance_provider": "Medicare",
+        "insurance_id": "MC-3392841",
+        "last_visit_date": "2024-07-08",
+    },
+    {
+        "_entity_id": "PAT042",
+        "patient_id": 42,
+        "first_name": "Samantha",
+        "last_name": "Rivera",
+        "dob": "1997-08-22",
+        "gender": "F",
+        "phone": "505-555-4312",
+        "email": "samantha.rivera97@gmail.com",
+        "address_line": "400 Central Ave SW",
+        "city": "Albuquerque",
+        "state": "NM",
+        "zip": "87102",
+        "insurance_provider": "Cigna",
+        "insurance_id": "CI-8812347",
+        "last_visit_date": "2023-12-29",
+    },
+    # --- GENDER-NEUTRAL NAME TRAP: Dana (M) ---
+    {
+        "_entity_id": "PAT043",
+        "patient_id": 43,
+        "first_name": "Dana",
+        "last_name": "Crawford",
+        "dob": "1965-11-28",
+        "gender": "M",
+        "phone": "901-555-4423",
+        "email": "dana.crawford65@hotmail.com",
+        "address_line": "203 Beale St",
+        "city": "Memphis",
+        "state": "TN",
+        "zip": "38103",
+        "insurance_provider": "Blue Cross",
+        "insurance_id": "BC-1148273",
+        "last_visit_date": "2024-04-15",
+    },
+    # --- FALSE POSITIVE PAIR 5: Two "James Lee" (PAT044 & PAT045) ---
+    {
+        "_entity_id": "PAT044",
+        "patient_id": 44,
+        "first_name": "James",
+        "last_name": "Lee",
+        "dob": "1981-05-09",
+        "gender": "M",
+        "phone": "510-555-4534",
+        "email": "james.lee81@gmail.com",
+        "address_line": "1901 Harrison St",
+        "city": "Oakland",
+        "state": "CA",
+        "zip": "94612",
+        "insurance_provider": "Aetna",
+        "insurance_id": "AE-5523918",
+        "last_visit_date": "2024-06-22",
+    },
+    {
+        "_entity_id": "PAT045",
+        "patient_id": 45,
+        "first_name": "James",
+        "last_name": "Lee",
+        "dob": "1982-10-31",
+        "gender": "M",
+        "phone": "408-555-4645",
+        "email": "jlee82@yahoo.com",
+        "address_line": "225 W Santa Clara St",
+        "city": "San Jose",
+        "state": "CA",
+        "zip": "95113",
+        "insurance_provider": "Aetna",
+        "insurance_id": "AE-7739482",
+        "last_visit_date": "2023-09-14",
+    },
+    {
+        "_entity_id": "PAT046",
+        "patient_id": 46,
+        "first_name": "Theresa",
+        "last_name": "Nguyen",
+        "dob": "1973-07-14",
+        "gender": "F",
+        "phone": "832-555-4756",
+        "email": "theresa.nguyen73@gmail.com",
+        "address_line": "2100 Travis St",
+        "city": "Houston",
+        "state": "TX",
+        "zip": "77002",
+        "insurance_provider": "UnitedHealth",
+        "insurance_id": "UH-2248637",
+        "last_visit_date": "2024-05-07",
+    },
+    # --- GENDER-NEUTRAL NAME TRAP: Robin (F) ---
+    {
+        "_entity_id": "PAT047",
+        "patient_id": 47,
+        "first_name": "Robin",
+        "last_name": "Blackwell",
+        "dob": "1980-05-16",
+        "gender": "F",
+        "phone": "336-555-4867",
+        "email": "robin.blackwell@outlook.com",
+        "address_line": "300 N Greene St",
+        "city": "Greensboro",
+        "state": "NC",
+        "zip": "27401",
+        "insurance_provider": "Medicare",
+        "insurance_id": "MC-4458923",
+        "last_visit_date": "2024-03-11",
+    },
+    # --- DUPLICATE CLUSTER: Catherine -> spelling variants (PAT048) ---
+    # NOTE: PAT006 is Katherine Patel (different person!). Agent must NOT
+    # merge PAT048's duplicates with PAT006.
+    {
+        "_entity_id": "PAT048",
+        "patient_id": 48,
+        "first_name": "Catherine",
+        "last_name": "Brooks",
+        "dob": "1987-09-03",
+        "gender": "F",
+        "phone": "614-555-4978",
+        "email": "catherine.brooks@gmail.com",
+        "address_line": "100 E Broad St",
+        "city": "Columbus",
+        "state": "OH",
+        "zip": "43215",
+        "insurance_provider": "Blue Cross",
+        "insurance_id": "BC-6693147",
+        "last_visit_date": "2024-07-25",
+    },
+    {
+        "_entity_id": "PAT049",
+        "patient_id": 49,
+        "first_name": "Raymond",
+        "last_name": "Foster",
+        "dob": "1950-02-11",
+        "gender": "M",
+        "phone": "502-555-5089",
+        "email": "raymond.foster50@aol.com",
+        "address_line": "700 W Main St",
+        "city": "Louisville",
+        "state": "KY",
+        "zip": "40202",
+        "insurance_provider": "Medicare",
+        "insurance_id": "MC-8817294",
+        "last_visit_date": "2024-02-19",
+    },
+    {
+        "_entity_id": "PAT050",
+        "patient_id": 50,
+        "first_name": "Heather",
+        "last_name": "Sanchez",
+        "dob": "2004-06-21",
+        "gender": "F",
+        "phone": "515-555-5190",
+        "email": "heather.sanchez04@gmail.com",
+        "address_line": "1000 Walnut St",
+        "city": "Des Moines",
+        "state": "IA",
+        "zip": "50309",
+        "insurance_provider": "Cigna",
+        "insurance_id": "CI-3347291",
+        "last_visit_date": "2023-10-05",
+    },
 ]
 
 _HARD_SCHEMA: dict[str, Any] = {
@@ -1389,17 +1744,22 @@ _HARD_SCHEMA: dict[str, Any] = {
         "zip_city_map": {
             "60601": "Chicago",
             "60602": "Chicago",
+            "60603": "Chicago",
+            "60625": "Chicago",
             "98101": "Seattle",
             "02101": "Boston",
             "97201": "Portland",
             "80201": "Denver",
+            "80202": "Denver",
             "30301": "Atlanta",
+            "30305": "Atlanta",
             "90210": "Beverly Hills",
             "33101": "Miami",
             "73301": "Austin",
             "10001": "New York",
             "94105": "San Francisco",
             "77027": "Houston",
+            "77002": "Houston",
             "85012": "Phoenix",
             "37201": "Nashville",
             "89109": "Las Vegas",
@@ -1418,6 +1778,20 @@ _HARD_SCHEMA: dict[str, Any] = {
             "53203": "Milwaukee",
             "22102": "Tysons",
             "27601": "Raleigh",
+            "98402": "Tacoma",
+            "98004": "Bellevue",
+            "33607": "Tampa",
+            "85251": "Scottsdale",
+            "85701": "Tucson",
+            "06103": "Hartford",
+            "87102": "Albuquerque",
+            "38103": "Memphis",
+            "94612": "Oakland",
+            "95113": "San Jose",
+            "27401": "Greensboro",
+            "43215": "Columbus",
+            "40202": "Louisville",
+            "50309": "Des Moines",
         },
         "insurance_prefix_map": {
             "Blue Cross": "BC",
@@ -1430,7 +1804,10 @@ _HARD_SCHEMA: dict[str, Any] = {
 }
 
 _HARD_CORRUPTIONS: list[dict[str, Any]] = [
-    # --- duplicate_cluster: 6 clusters creating ~10 extra rows ---
+    # =========================================================================
+    # ORIGINAL 6 duplicate clusters (nickname variants) creating ~10 extra rows
+    # Duplicate patient_ids start at 51 (PAT031-PAT050 are real patients now)
+    # =========================================================================
     {
         "type": "duplicate_cluster",
         "source_indices": [0],
@@ -1441,7 +1818,7 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "source_patient_id": 1,
         "duplicates": [
             {
-                "new_patient_id": 31,
+                "new_patient_id": 51,
                 "changes": {
                     "first_name": "Bill",
                     "email": "bill.thompson@gmail.com",
@@ -1451,7 +1828,7 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
                 },
             },
             {
-                "new_patient_id": 32,
+                "new_patient_id": 52,
                 "changes": {
                     "first_name": "Wm",
                     "email": "wm.thompson@yahoo.com",
@@ -1472,7 +1849,7 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "source_patient_id": 2,
         "duplicates": [
             {
-                "new_patient_id": 33,
+                "new_patient_id": 53,
                 "changes": {
                     "first_name": "Bob",
                     "email": "bob.martinez@outlook.com",
@@ -1493,7 +1870,7 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "source_patient_id": 3,
         "duplicates": [
             {
-                "new_patient_id": 34,
+                "new_patient_id": 54,
                 "changes": {
                     "first_name": "Liz",
                     "last_name": "OBrien",
@@ -1503,7 +1880,7 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
                 },
             },
             {
-                "new_patient_id": 35,
+                "new_patient_id": 55,
                 "changes": {
                     "first_name": "Beth",
                     "last_name": "O Brien",
@@ -1524,7 +1901,7 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "source_patient_id": 4,
         "duplicates": [
             {
-                "new_patient_id": 36,
+                "new_patient_id": 56,
                 "changes": {
                     "first_name": "Jen",
                     "email": "jen.nguyen@gmail.com",
@@ -1545,7 +1922,7 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "source_patient_id": 5,
         "duplicates": [
             {
-                "new_patient_id": 37,
+                "new_patient_id": 57,
                 "changes": {
                     "first_name": "Jim",
                     "email": "jim.kowalski@aol.com",
@@ -1566,7 +1943,7 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "source_patient_id": 6,
         "duplicates": [
             {
-                "new_patient_id": 38,
+                "new_patient_id": 58,
                 "changes": {
                     "first_name": "Kate",
                     "email": "kate.patel@hotmail.com",
@@ -1576,7 +1953,7 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
                 },
             },
             {
-                "new_patient_id": 39,
+                "new_patient_id": 59,
                 "changes": {
                     "first_name": "Kathy",
                     "email": "kathy.patel@gmail.com",
@@ -1587,7 +1964,122 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
             },
         ],
     },
-    # --- cross_field_corrupt: zip-city mismatches ---
+    # =========================================================================
+    # NEW 4 duplicate clusters (TYPO-based, much harder than nicknames)
+    # =========================================================================
+    {
+        "type": "duplicate_cluster",
+        "source_indices": [33],
+        "cluster_sizes": [2],
+        "noise_fields": ["first_name", "address_line"],
+        "description": "Christopher Reeves -> 'Christpher Reeves' (dropped 'o') and 'Chistopher Reeves' (dropped 'r')",
+        "source_entity_id": "PAT034",
+        "source_patient_id": 34,
+        "duplicates": [
+            {
+                "new_patient_id": 60,
+                "changes": {
+                    "first_name": "Christpher",
+                    "email": "christpher.reeves@gmail.com",
+                    "phone": "813-555-3535",
+                    "address_line": "1400 N Dale Mabry",
+                },
+            },
+            {
+                "new_patient_id": 61,
+                "changes": {
+                    "first_name": "Chistopher",
+                    "email": "chistopher.reeves@yahoo.com",
+                    "address_line": "1400 North Dale Mabry Hwy",
+                    "last_visit_date": "2024-06-06",
+                },
+            },
+        ],
+    },
+    {
+        "type": "duplicate_cluster",
+        "source_indices": [37],
+        "cluster_sizes": [1],
+        "noise_fields": ["first_name"],
+        "description": "Alexandra Petrov -> 'Alessandra Petrov' (common misspelling/Italian variant)",
+        "source_entity_id": "PAT038",
+        "source_patient_id": 38,
+        "duplicates": [
+            {
+                "new_patient_id": 62,
+                "changes": {
+                    "first_name": "Alessandra",
+                    "email": "alessandra.petrov@gmail.com",
+                    "phone": "480-555-3979",
+                    "address_line": "7100 E Camelback Road",
+                },
+            },
+        ],
+    },
+    {
+        "type": "duplicate_cluster",
+        "source_indices": [39],
+        "cluster_sizes": [2],
+        "noise_fields": ["first_name", "address_line"],
+        "description": "Patricia Hernandez -> 'Patricla Hernandez' (typo i->l) and 'Patrica Hernandez' (dropped 'i')",
+        "source_entity_id": "PAT040",
+        "source_patient_id": 40,
+        "duplicates": [
+            {
+                "new_patient_id": 63,
+                "changes": {
+                    "first_name": "Patricla",
+                    "email": "patricla.hernandez@gmail.com",
+                    "phone": "520-555-4191",
+                    "address_line": "150 North Stone Ave",
+                },
+            },
+            {
+                "new_patient_id": 64,
+                "changes": {
+                    "first_name": "Patrica",
+                    "email": "patrica.hernandez@yahoo.com",
+                    "address_line": "150 N Stone Avenue",
+                    "last_visit_date": "2024-01-18",
+                },
+            },
+        ],
+    },
+    {
+        "type": "duplicate_cluster",
+        "source_indices": [47],
+        "cluster_sizes": [2],
+        "noise_fields": ["first_name", "address_line"],
+        "description": (
+            "Catherine Brooks -> 'Katherine Brooks' (C->K variant) and 'Catharine Brooks' (e->a variant). "
+            "TRAP: PAT006 is Katherine Patel - agent must NOT merge these with PAT006!"
+        ),
+        "source_entity_id": "PAT048",
+        "source_patient_id": 48,
+        "duplicates": [
+            {
+                "new_patient_id": 65,
+                "changes": {
+                    "first_name": "Katherine",
+                    "email": "katherine.brooks@gmail.com",
+                    "phone": "614-555-4979",
+                    "address_line": "100 East Broad St",
+                },
+            },
+            {
+                "new_patient_id": 66,
+                "changes": {
+                    "first_name": "Catharine",
+                    "email": "catharine.brooks@yahoo.com",
+                    "address_line": "100 E Broad Street",
+                    "last_visit_date": "2024-07-26",
+                },
+            },
+        ],
+    },
+    # =========================================================================
+    # ORIGINAL cross_field_corrupt: zip-city mismatches
+    # =========================================================================
     {
         "type": "cross_field_corrupt",
         "row_indices": [17],
@@ -1608,7 +2100,50 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "46204",
         "corrupted": "60601",
     },
-    # --- cross_field_corrupt: insurance ID prefix mismatches ---
+    # --- NEW zip-city mismatches for new patients ---
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [30],
+        "description": "Zip-city mismatch: Tacoma patient 31 given Seattle zip 98101",
+        "target_entity_id": "PAT031",
+        "target_patient_id": 31,
+        "field": "zip",
+        "original": "98402",
+        "corrupted": "98101",
+    },
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [41],
+        "description": "Zip-city mismatch: Albuquerque patient 42 given Tucson zip 85701",
+        "target_entity_id": "PAT042",
+        "target_patient_id": 42,
+        "field": "zip",
+        "original": "87102",
+        "corrupted": "85701",
+    },
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [48],
+        "description": "Zip-city mismatch: Louisville patient 49 given Columbus zip 43215",
+        "target_entity_id": "PAT049",
+        "target_patient_id": 49,
+        "field": "zip",
+        "original": "40202",
+        "corrupted": "43215",
+    },
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [45],
+        "description": "Zip-city mismatch: Houston patient 46 given Dallas zip 75201",
+        "target_entity_id": "PAT046",
+        "target_patient_id": 46,
+        "field": "zip",
+        "original": "77002",
+        "corrupted": "75201",
+    },
+    # =========================================================================
+    # ORIGINAL cross_field_corrupt: insurance ID prefix mismatches
+    # =========================================================================
     {
         "type": "cross_field_corrupt",
         "row_indices": [20],
@@ -1629,7 +2164,40 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "BC-2215847",
         "corrupted": "AE-2215847",
     },
-    # --- cross_field_corrupt: gender format ---
+    # --- NEW insurance prefix mismatches ---
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [40],
+        "description": "Insurance ID prefix mismatch: Medicare patient 41 given UH prefix",
+        "target_entity_id": "PAT041",
+        "target_patient_id": 41,
+        "field": "insurance_id",
+        "original": "MC-3392841",
+        "corrupted": "UH-3392841",
+    },
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [34],
+        "description": "Insurance ID prefix mismatch: Aetna patient 35 given CI prefix",
+        "target_entity_id": "PAT035",
+        "target_patient_id": 35,
+        "field": "insurance_id",
+        "original": "AE-3318724",
+        "corrupted": "CI-3318724",
+    },
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [49],
+        "description": "Insurance ID prefix mismatch: Cigna patient 50 given MC prefix",
+        "target_entity_id": "PAT050",
+        "target_patient_id": 50,
+        "field": "insurance_id",
+        "original": "CI-3347291",
+        "corrupted": "MC-3347291",
+    },
+    # =========================================================================
+    # ORIGINAL cross_field_corrupt: gender format
+    # =========================================================================
     {
         "type": "cross_field_corrupt",
         "row_indices": [11],
@@ -1640,7 +2208,9 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "F",
         "corrupted": "Female",
     },
-    # --- impossible_date: date format corruptions ---
+    # =========================================================================
+    # ORIGINAL impossible_date: date format corruptions
+    # =========================================================================
     {
         "type": "impossible_date",
         "targets": [{"row_idx": 11, "field": "dob", "corrupt_type": "format"}],
@@ -1681,7 +2251,81 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "2024-02-07",
         "corrupted": "2/7/2024",
     },
-    # --- insurance_id_mismatch: missing/corrupted insurance IDs + gender mismatches ---
+    # --- NEW date format corruptions for new patients ---
+    {
+        "type": "impossible_date",
+        "targets": [{"row_idx": 33, "field": "dob", "corrupt_type": "format"}],
+        "description": "DOB reformatted to DD/MM/YYYY for patient 34",
+        "target_entity_id": "PAT034",
+        "target_patient_id": 34,
+        "field": "dob",
+        "original": "1976-08-25",
+        "corrupted": "25/08/1976",
+    },
+    {
+        "type": "impossible_date",
+        "targets": [{"row_idx": 37, "field": "last_visit_date", "corrupt_type": "format"}],
+        "description": "Last visit date reformatted to 'Feb 20, 2024' for patient 38",
+        "target_entity_id": "PAT038",
+        "target_patient_id": 38,
+        "field": "last_visit_date",
+        "original": "2024-02-20",
+        "corrupted": "Feb 20, 2024",
+    },
+    {
+        "type": "impossible_date",
+        "targets": [{"row_idx": 42, "field": "dob", "corrupt_type": "format"}],
+        "description": "DOB reformatted to MM-DD-YYYY for patient 43",
+        "target_entity_id": "PAT043",
+        "target_patient_id": 43,
+        "field": "dob",
+        "original": "1965-11-28",
+        "corrupted": "11-28-1965",
+    },
+    {
+        "type": "impossible_date",
+        "targets": [{"row_idx": 46, "field": "last_visit_date", "corrupt_type": "format"}],
+        "description": "Last visit date reformatted to D/M/YYYY for patient 47",
+        "target_entity_id": "PAT047",
+        "target_patient_id": 47,
+        "field": "last_visit_date",
+        "original": "2024-03-11",
+        "corrupted": "11/3/2024",
+    },
+    {
+        "type": "impossible_date",
+        "targets": [{"row_idx": 49, "field": "dob", "corrupt_type": "format"}],
+        "description": "DOB reformatted to 'Jun 21, 2004' for patient 50",
+        "target_entity_id": "PAT050",
+        "target_patient_id": 50,
+        "field": "dob",
+        "original": "2004-06-21",
+        "corrupted": "Jun 21, 2004",
+    },
+    # --- NEW subtle DOB off-by-one corruptions (very hard to detect) ---
+    {
+        "type": "impossible_date",
+        "targets": [{"row_idx": 31, "field": "dob", "corrupt_type": "off_by_one"}],
+        "description": "DOB day off by 1: patient 32 '1988-07-20' -> '1988-07-21'",
+        "target_entity_id": "PAT032",
+        "target_patient_id": 32,
+        "field": "dob",
+        "original": "1988-07-20",
+        "corrupted": "1988-07-21",
+    },
+    {
+        "type": "impossible_date",
+        "targets": [{"row_idx": 43, "field": "dob", "corrupt_type": "off_by_one"}],
+        "description": "DOB day off by 1: patient 44 '1981-05-09' -> '1981-05-10'",
+        "target_entity_id": "PAT044",
+        "target_patient_id": 44,
+        "field": "dob",
+        "original": "1981-05-09",
+        "corrupted": "1981-05-10",
+    },
+    # =========================================================================
+    # ORIGINAL insurance_id_mismatch: missing/corrupted + gender mismatches
+    # =========================================================================
     {
         "type": "insurance_id_mismatch",
         "row_indices": [26],
@@ -1712,7 +2356,9 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "M",
         "corrupted": "m",
     },
-    # --- null_inject_contextual: missing values and whitespace ---
+    # =========================================================================
+    # ORIGINAL null_inject_contextual: missing values and whitespace
+    # =========================================================================
     {
         "type": "null_inject_contextual",
         "targets": [{"row_idx": 13, "field": "email"}],
@@ -1743,6 +2389,38 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "400 Fayetteville St",
         "corrupted": None,
     },
+    # --- NEW null injections for new patients ---
+    {
+        "type": "null_inject_contextual",
+        "targets": [{"row_idx": 40, "field": "phone"}],
+        "description": "Phone set to None for patient 41 (Gregory Adams)",
+        "target_entity_id": "PAT041",
+        "target_patient_id": 41,
+        "field": "phone",
+        "original": "860-555-4201",
+        "corrupted": None,
+    },
+    {
+        "type": "null_inject_contextual",
+        "targets": [{"row_idx": 47, "field": "email"}],
+        "description": "Email set to None for patient 48 (Catherine Brooks)",
+        "target_entity_id": "PAT048",
+        "target_patient_id": 48,
+        "field": "email",
+        "original": "catherine.brooks@gmail.com",
+        "corrupted": None,
+    },
+    {
+        "type": "null_inject_contextual",
+        "targets": [{"row_idx": 38, "field": "insurance_id"}],
+        "description": "Insurance ID set to None for patient 39 (Casey Morgan)",
+        "target_entity_id": "PAT039",
+        "target_patient_id": 39,
+        "field": "insurance_id",
+        "original": "MC-7724316",
+        "corrupted": None,
+    },
+    # --- ORIGINAL whitespace corruptions ---
     {
         "type": "null_inject_contextual",
         "targets": [{"row_idx": 10, "field": "first_name"}],
@@ -1763,7 +2441,40 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "patricia.lee@outlook.com",
         "corrupted": "patricia.lee @outlook.com",
     },
-    # --- false_positive_duplicate: 2 pairs (already in ground truth) ---
+    # --- NEW whitespace corruptions ---
+    {
+        "type": "null_inject_contextual",
+        "targets": [{"row_idx": 44, "field": "last_name"}],
+        "description": "Last name with trailing space for patient 45 (James Lee)",
+        "target_entity_id": "PAT045",
+        "target_patient_id": 45,
+        "field": "last_name",
+        "original": "Lee",
+        "corrupted": "Lee ",
+    },
+    {
+        "type": "null_inject_contextual",
+        "targets": [{"row_idx": 39, "field": "first_name"}],
+        "description": "First name with leading tab for patient 40 (Patricia Hernandez)",
+        "target_entity_id": "PAT040",
+        "target_patient_id": 40,
+        "field": "first_name",
+        "original": "Patricia",
+        "corrupted": "\tPatricia",
+    },
+    {
+        "type": "null_inject_contextual",
+        "targets": [{"row_idx": 48, "field": "city"}],
+        "description": "City with trailing whitespace for patient 49 (Raymond Foster)",
+        "target_entity_id": "PAT049",
+        "target_patient_id": 49,
+        "field": "city",
+        "original": "Louisville",
+        "corrupted": "Louisville  ",
+    },
+    # =========================================================================
+    # ORIGINAL false_positive_duplicate: 2 pairs (already in ground truth)
+    # =========================================================================
     {
         "type": "false_positive_duplicate",
         "pairs": [[6, 7]],
@@ -1786,7 +2497,47 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "patient_ids": [9, 10],
         "distinguishing_fields": ["dob", "city", "state", "zip", "email", "insurance_provider", "insurance_id"],
     },
-    # --- address_variation: phone format variations ---
+    # --- NEW false_positive_duplicate: 3 harder pairs ---
+    {
+        "type": "false_positive_duplicate",
+        "pairs": [[31, 32]],
+        "description": (
+            "Two different 'David Kim' patients (PAT032 and PAT033) - SAME insurance "
+            "provider (UnitedHealth), SAME state (WA), DOBs only 2 years apart. "
+            "Distinguishable by different insurance IDs, different cities, different DOB. "
+            "Must NOT be merged."
+        ),
+        "entity_ids": ["PAT032", "PAT033"],
+        "patient_ids": [32, 33],
+        "distinguishing_fields": ["dob", "city", "zip", "email", "insurance_id", "phone"],
+    },
+    {
+        "type": "false_positive_duplicate",
+        "pairs": [[35, 36]],
+        "description": (
+            "Two different 'Sarah Williams' patients (PAT036 and PAT037) - SAME city "
+            "(Chicago), SAME state (IL). DOBs 5 years apart, different insurance. "
+            "Must NOT be merged."
+        ),
+        "entity_ids": ["PAT036", "PAT037"],
+        "patient_ids": [36, 37],
+        "distinguishing_fields": ["dob", "zip", "address_line", "email", "insurance_provider", "insurance_id", "phone"],
+    },
+    {
+        "type": "false_positive_duplicate",
+        "pairs": [[43, 44]],
+        "description": (
+            "Two different 'James Lee' patients (PAT044 and PAT045) - DOBs only 1 year "
+            "apart, SAME state (CA), SAME insurance provider (Aetna). Distinguishable "
+            "by different insurance IDs, different cities. Must NOT be merged."
+        ),
+        "entity_ids": ["PAT044", "PAT045"],
+        "patient_ids": [44, 45],
+        "distinguishing_fields": ["dob", "city", "zip", "email", "insurance_id", "phone"],
+    },
+    # =========================================================================
+    # ORIGINAL address_variation: phone format variations
+    # =========================================================================
     {
         "type": "address_variation",
         "row_indices": [10],
@@ -1827,7 +2578,50 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "216-555-2579",
         "corrupted": "+1-216-555-2579",
     },
-    # --- case corruptions ---
+    # --- NEW phone format variations ---
+    {
+        "type": "address_variation",
+        "row_indices": [33],
+        "description": "Phone format changed to (XXX) XXX-XXXX for patient 34",
+        "target_entity_id": "PAT034",
+        "target_patient_id": 34,
+        "field": "phone",
+        "original": "813-555-3534",
+        "corrupted": "(813) 555-3534",
+    },
+    {
+        "type": "address_variation",
+        "row_indices": [41],
+        "description": "Phone format changed to XXX.XXX.XXXX for patient 42",
+        "target_entity_id": "PAT042",
+        "target_patient_id": 42,
+        "field": "phone",
+        "original": "505-555-4312",
+        "corrupted": "505.555.4312",
+    },
+    {
+        "type": "address_variation",
+        "row_indices": [45],
+        "description": "Phone stripped of dashes for patient 46",
+        "target_entity_id": "PAT046",
+        "target_patient_id": 46,
+        "field": "phone",
+        "original": "832-555-4756",
+        "corrupted": "8325554756",
+    },
+    {
+        "type": "address_variation",
+        "row_indices": [48],
+        "description": "Phone with country code prefix for patient 49",
+        "target_entity_id": "PAT049",
+        "target_patient_id": 49,
+        "field": "phone",
+        "original": "502-555-5089",
+        "corrupted": "+1-502-555-5089",
+    },
+    # =========================================================================
+    # ORIGINAL case corruptions
+    # =========================================================================
     {
         "type": "case_corrupt",
         "targets": [{"row_idx": 12, "field": "first_name"}],
@@ -1864,7 +2658,46 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "Young",
         "corrupted": "YOUNG",
     },
-    # --- address whitespace corruptions ---
+    # --- NEW case corruptions ---
+    {
+        "type": "case_corrupt",
+        "targets": [{"row_idx": 37, "field": "last_name"}],
+        "description": "Last name lowercased for patient 38 (Petrov -> petrov)",
+        "target_entity_id": "PAT038",
+        "target_patient_id": 38,
+        "original": "Petrov",
+        "corrupted": "petrov",
+    },
+    {
+        "type": "case_corrupt",
+        "targets": [{"row_idx": 42, "field": "first_name"}],
+        "description": "First name uppercased for patient 43 (Dana -> DANA)",
+        "target_entity_id": "PAT043",
+        "target_patient_id": 43,
+        "original": "Dana",
+        "corrupted": "DANA",
+    },
+    {
+        "type": "case_corrupt",
+        "targets": [{"row_idx": 47, "field": "city"}],
+        "description": "City lowercased for patient 48 (Columbus -> columbus)",
+        "target_entity_id": "PAT048",
+        "target_patient_id": 48,
+        "original": "Columbus",
+        "corrupted": "columbus",
+    },
+    {
+        "type": "case_corrupt",
+        "targets": [{"row_idx": 49, "field": "state"}],
+        "description": "State lowercased for patient 50 (IA -> ia)",
+        "target_entity_id": "PAT050",
+        "target_patient_id": 50,
+        "original": "IA",
+        "corrupted": "ia",
+    },
+    # =========================================================================
+    # ORIGINAL address whitespace corruptions
+    # =========================================================================
     {
         "type": "address_variation",
         "row_indices": [19],
@@ -1885,7 +2718,75 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "original": "New Orleans",
         "corrupted": "New  Orleans",
     },
-    # --- valid_unusual: gender/name traps (NOT errors) ---
+    # =========================================================================
+    # NEW email domain typo corruptions (subtle)
+    # =========================================================================
+    {
+        "type": "address_variation",
+        "row_indices": [34],
+        "description": "Email domain typo for patient 35 (yahoo.com -> yaho.com)",
+        "target_entity_id": "PAT035",
+        "target_patient_id": 35,
+        "field": "email",
+        "original": "avery.simmons94@yahoo.com",
+        "corrupted": "avery.simmons94@yaho.com",
+    },
+    {
+        "type": "address_variation",
+        "row_indices": [41],
+        "description": "Email domain typo for patient 42 (gmail.com -> gmial.com)",
+        "target_entity_id": "PAT042",
+        "target_patient_id": 42,
+        "field": "email",
+        "original": "samantha.rivera97@gmail.com",
+        "corrupted": "samantha.rivera97@gmial.com",
+    },
+    {
+        "type": "address_variation",
+        "row_indices": [48],
+        "description": "Email domain typo for patient 49 (aol.com -> aol.cm)",
+        "target_entity_id": "PAT049",
+        "target_patient_id": 49,
+        "field": "email",
+        "original": "raymond.foster50@aol.com",
+        "corrupted": "raymond.foster50@aol.cm",
+    },
+    # =========================================================================
+    # NEW state full-name instead of abbreviation corruptions
+    # =========================================================================
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [33],
+        "description": "State full name instead of abbreviation for patient 34 (FL -> Florida)",
+        "target_entity_id": "PAT034",
+        "target_patient_id": 34,
+        "field": "state",
+        "original": "FL",
+        "corrupted": "Florida",
+    },
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [43],
+        "description": "State full name instead of abbreviation for patient 44 (CA -> California)",
+        "target_entity_id": "PAT044",
+        "target_patient_id": 44,
+        "field": "state",
+        "original": "CA",
+        "corrupted": "California",
+    },
+    {
+        "type": "cross_field_corrupt",
+        "row_indices": [40],
+        "description": "State full name instead of abbreviation for patient 41 (CT -> Connecticut)",
+        "target_entity_id": "PAT041",
+        "target_patient_id": 41,
+        "field": "state",
+        "original": "CT",
+        "corrupted": "Connecticut",
+    },
+    # =========================================================================
+    # ORIGINAL + NEW valid_unusual: gender/name traps (NOT errors)
+    # =========================================================================
     {
         "type": "valid_unusual",
         "description": "Ashley (M) - historically male name, VALID. Do NOT correct.",
@@ -1913,6 +2814,51 @@ _HARD_CORRUPTIONS: list[dict[str, Any]] = [
         "gender": "M",
         "note": "Shannon was historically a male Irish name; this is valid.",
     },
+    {
+        "type": "valid_unusual",
+        "description": "Morgan (M) - gender-neutral name, VALID. Do NOT correct.",
+        "entity_id": "PAT031",
+        "patient_id": 31,
+        "first_name": "Morgan",
+        "gender": "M",
+        "note": "Morgan is gender-neutral; valid for male patients.",
+    },
+    {
+        "type": "valid_unusual",
+        "description": "Avery (M) - gender-neutral name, VALID. Do NOT correct.",
+        "entity_id": "PAT035",
+        "patient_id": 35,
+        "first_name": "Avery",
+        "gender": "M",
+        "note": "Avery is gender-neutral; valid for male patients.",
+    },
+    {
+        "type": "valid_unusual",
+        "description": "Casey (F) - gender-neutral but often male, VALID. Do NOT correct.",
+        "entity_id": "PAT039",
+        "patient_id": 39,
+        "first_name": "Casey",
+        "gender": "F",
+        "note": "Casey is gender-neutral; valid for female patients.",
+    },
+    {
+        "type": "valid_unusual",
+        "description": "Dana (M) - gender-neutral name, VALID. Do NOT correct.",
+        "entity_id": "PAT043",
+        "patient_id": 43,
+        "first_name": "Dana",
+        "gender": "M",
+        "note": "Dana is gender-neutral; valid for male patients.",
+    },
+    {
+        "type": "valid_unusual",
+        "description": "Robin (F) - gender-neutral name, VALID. Do NOT correct.",
+        "entity_id": "PAT047",
+        "patient_id": 47,
+        "first_name": "Robin",
+        "gender": "F",
+        "note": "Robin is gender-neutral; valid for female patients.",
+    },
 ]
 
 _HARD_PROBES: list[UtilityProbe] = [
@@ -1921,7 +2867,7 @@ _HARD_PROBES: list[UtilityProbe] = [
         description="Count of unique patients after deduplication",
         query_fn="unique_count",
         params={"column": "patient_id"},
-        expected_result=30,
+        expected_result=50,
     ),
     UtilityProbe(
         name="insurance_provider_distribution",
@@ -1929,11 +2875,11 @@ _HARD_PROBES: list[UtilityProbe] = [
         query_fn="distribution",
         params={"column": "insurance_provider"},
         expected_result={
-            "Blue Cross": 6,
-            "UnitedHealth": 6,
-            "Aetna": 5,
-            "Cigna": 5,
-            "Medicare": 8,
+            "Blue Cross": 10,
+            "UnitedHealth": 10,
+            "Aetna": 9,
+            "Cigna": 9,
+            "Medicare": 12,
         },
     ),
     UtilityProbe(
@@ -1942,15 +2888,19 @@ _HARD_PROBES: list[UtilityProbe] = [
         query_fn="distribution",
         params={"column": "city"},
         expected_result={
-            "Chicago": 1, "Seattle": 1, "Boston": 1, "Portland": 1,
-            "Denver": 1, "Atlanta": 1, "Beverly Hills": 1, "Miami": 1,
-            "Austin": 1, "New York": 1, "San Francisco": 1, "Houston": 1,
+            "Chicago": 3, "Seattle": 2, "Boston": 1, "Portland": 1,
+            "Denver": 2, "Atlanta": 2, "Beverly Hills": 1, "Miami": 1,
+            "Austin": 1, "New York": 1, "San Francisco": 1, "Houston": 2,
             "Phoenix": 1, "Nashville": 1, "Las Vegas": 1, "Dallas": 1,
             "Minneapolis": 1, "Charlotte": 1, "Saint Louis": 1,
             "Orlando": 1, "Pittsburgh": 1, "San Diego": 1,
             "San Antonio": 1, "Indianapolis": 1, "Cleveland": 1,
             "New Orleans": 1, "Kansas City": 1, "Milwaukee": 1,
             "Tysons": 1, "Raleigh": 1,
+            "Tacoma": 1, "Bellevue": 1, "Tampa": 1, "Scottsdale": 1,
+            "Tucson": 1, "Hartford": 1, "Albuquerque": 1, "Memphis": 1,
+            "Oakland": 1, "San Jose": 1, "Greensboro": 1, "Columbus": 1,
+            "Louisville": 1, "Des Moines": 1,
         },
     ),
     UtilityProbe(
@@ -1958,7 +2908,7 @@ _HARD_PROBES: list[UtilityProbe] = [
         description="Average age (2026 - birth year) grouped by gender",
         query_fn="avg_by_group",
         params={"value_col": "dob", "group_col": "gender", "transform": "year_age_2026"},
-        expected_result={"F": 48.13, "M": 52.27},
+        expected_result={"F": 44.80, "M": 51.00},
     ),
 ]
 
@@ -1967,19 +2917,22 @@ _HARD_TASK = Task(
     name="Multi-Source Patient Registry",
     difficulty="hard",
     description=(
-        "Clean and deduplicate a multi-source patient registry with 30 unique "
-        "patients (14 columns). The dirty dataset contains ~40 rows due to 6 "
-        "duplicate clusters with nickname variants. Includes 2 false-positive "
-        "duplicate pairs (same name, genuinely different people) that must NOT be "
-        "merged, 3 gender/name traps that are valid and must NOT be corrected, "
+        "Clean and deduplicate a multi-source patient registry with 50 unique "
+        "patients (14 columns). The dirty dataset contains ~70 rows due to 10 "
+        "duplicate clusters (6 nickname-based, 4 typo-based including a "
+        "Catherine/Katherine cross-patient trap). Includes 5 false-positive "
+        "duplicate pairs (same name, genuinely different people with subtle "
+        "overlaps in location, insurance, or DOB) that must NOT be merged, "
+        "8 gender/name traps that are valid and must NOT be corrected, "
         "cross-field validation rules (zip-city map, insurance prefix map), "
-        "date and phone format inconsistencies, null injections, and insurance "
-        "ID mismatches."
+        "date and phone format inconsistencies, DOB off-by-one corruptions, "
+        "email domain typos, state full-name expansions, null injections, "
+        "whitespace corruptions, and insurance ID mismatches."
     ),
     ground_truth=_HARD_GROUND_TRUTH,
     schema=_HARD_SCHEMA,
     corruptions=_HARD_CORRUPTIONS,
-    max_steps=120,
+    max_steps=80,
     utility_probes=_HARD_PROBES,
     # Genuinely ambiguous cells where the correct value is debatable.
     # Gender/name traps: unusual but valid gender assignments.
@@ -1988,6 +2941,11 @@ _HARD_TASK = Task(
         ("PAT014", "gender"),   # Ashley (M) - historically male name
         ("PAT022", "gender"),   # Jordan (F) - gender-neutral name
         ("PAT027", "gender"),   # Shannon (M) - historically male Irish name
+        ("PAT031", "gender"),   # Morgan (M) - gender-neutral name
+        ("PAT035", "gender"),   # Avery (M) - gender-neutral name
+        ("PAT039", "gender"),   # Casey (F) - gender-neutral but often male
+        ("PAT043", "gender"),   # Dana (M) - gender-neutral name
+        ("PAT047", "gender"),   # Robin (F) - gender-neutral name
         ("PAT003", "last_name"),  # O'Brien vs OBrien vs O Brien - apostrophe handling debatable
     ],
 )

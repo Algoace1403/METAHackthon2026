@@ -3,7 +3,7 @@
 Compares the agent's final cleaned dataset against ground truth using:
 - Entity-ID based row alignment (primary) with similarity fallback
 - Type-aware cell matching (case-insensitive strings, date parsing, phone digits)
-- Weighted scoring: accuracy 40%, completeness 20%, format 10%, row count 10%,
+- Weighted scoring: accuracy 35%, row count 20%, completeness 15%, format 10%,
   efficiency 10%, utility 10%
 - Downstream utility probes: verify aggregate analytics match expected results
 - Penalties for destructive actions, bonuses for full column cleanup
@@ -53,13 +53,27 @@ class DataCleanGrader:
     """Deterministic grader using entity-ID alignment and type-aware matching."""
 
     WEIGHTS = {
-        "accuracy": 0.40,
-        "completeness": 0.20,
+        "accuracy": 0.35,
+        "completeness": 0.15,
         "format_consistency": 0.10,
-        "row_correctness": 0.10,
+        "row_correctness": 0.20,
         "efficiency": 0.10,
         "utility": 0.10,
     }
+
+    # Grading thresholds and penalty/bonus constants
+    MIN_ACCURACY_FOR_EFFICIENCY = 0.10
+    MIN_ROW_CORRECTNESS_FOR_BONUSES = 0.90
+    PENALTY_DELETE_VALID_ROW = 0.10
+    PENALTY_WRONG_FIX = 0.05
+    PENALTY_WRONG_FIX_AMBIGUOUS = 0.08
+    PENALTY_BAD_MERGE = 0.10
+    PENALTY_CAP = 0.50
+    BONUS_FULL_COLUMN_CLEAN = 0.10
+    BONUS_FLAG_CORRECT = 0.02
+    BONUS_ESCALATE_AMBIGUOUS = 0.03
+    BONUS_ESCALATE_WRONG = -0.02
+    BONUS_CAP = 0.20
 
     def grade(
         self,
@@ -79,6 +93,11 @@ class DataCleanGrader:
 
         Returns a GradeResult with composite score in [0.0, 1.0].
 
+        Completeness and format are scored as improvement over the dirty
+        baseline (original_data). Efficiency and utility are gated on a
+        minimum accuracy threshold to prevent lazy agents from earning
+        free credit.
+
         Args:
             budget_spent: Total action cost spent during the episode.
             action_budget: Total budget allocated for the episode.
@@ -95,20 +114,44 @@ class DataCleanGrader:
         # Step 3: Compute scoring components
         types = schema.get("expected_types", {})
         accuracy = self._compute_accuracy(final_data, ground_truth, alignment, dirty_cells, types)
-        completeness = self._compute_completeness(final_data, ground_truth, alignment, types)
-        format_score = self._compute_format_score(final_data, schema)
+
+        # Completeness & format: measure IMPROVEMENT over dirty baseline,
+        # not absolute values. Dirty data already has ~91% completeness;
+        # an agent that does nothing shouldn't get credit for that.
+        raw_completeness = self._compute_completeness(final_data, ground_truth, alignment, types)
+        raw_format = self._compute_format_score(final_data, schema)
+
+        initial_alignment = self._align_rows(original_data, ground_truth, schema)
+        initial_completeness = self._compute_completeness(
+            original_data, ground_truth, initial_alignment, types,
+        )
+        initial_format = self._compute_format_score(original_data, schema)
+
+        if initial_completeness < 1.0:
+            completeness = max(0.0, (raw_completeness - initial_completeness) / (1.0 - initial_completeness))
+        else:
+            completeness = raw_completeness
+
+        if initial_format < 1.0:
+            format_score = max(0.0, (raw_format - initial_format) / (1.0 - initial_format))
+        else:
+            format_score = raw_format
+
         row_score = self._compute_row_score(len(final_data), len(ground_truth))
 
-        # Efficiency bonus: reward achieving same quality with less cost
-        if action_budget > 0:
+        # Efficiency: gate on minimum accuracy. Spending nothing when you
+        # fixed nothing is laziness, not efficiency.
+        if accuracy >= self.MIN_ACCURACY_FOR_EFFICIENCY and action_budget > 0:
             efficiency = max(0.0, 1.0 - (budget_spent / action_budget))
         else:
-            efficiency = 1.0
+            efficiency = 0.0
 
-        # Step 3b: Downstream utility probes
-        utility_score, utility_details = self._compute_utility_score(
+        # Downstream utility probes: gate on minimum accuracy too.
+        # Dirty data may incidentally pass probes — that's not earned.
+        raw_utility, utility_details = self._compute_utility_score(
             final_data, utility_probes or [],
         )
+        utility_score = raw_utility if accuracy >= self.MIN_ACCURACY_FOR_EFFICIENCY else 0.0
 
         # Step 4: Penalties and bonuses
         penalties = self._compute_penalties(
@@ -133,7 +176,11 @@ class DataCleanGrader:
             + self.WEIGHTS["efficiency"] * efficiency
             + self.WEIGHTS["utility"] * utility_score
         )
-        final_score = max(0.0, min(1.0, base_score - penalties + bonuses))
+
+        # Gate bonuses on row_correctness: an agent that skips dedup
+        # (leaving extra rows) should not earn full-column-clean bonuses
+        gated_bonuses = bonuses if row_score >= self.MIN_ROW_CORRECTNESS_FOR_BONUSES else 0.0
+        final_score = max(0.0, min(1.0, base_score - penalties + gated_bonuses))
 
         return GradeResult(
             score=round(final_score, 4),
@@ -315,7 +362,7 @@ class DataCleanGrader:
 
         # Invert: for each gt row, find the original row
         gt_to_orig: Dict[int, int] = {}
-        for orig_i, gt_candidates in self._invert_alignment(alignment, ground_truth).items():
+        for orig_i, gt_candidates in self._invert_alignment(alignment).items():
             for gt_i in gt_candidates:
                 gt_to_orig[gt_i] = orig_i
 
@@ -338,7 +385,7 @@ class DataCleanGrader:
 
     @staticmethod
     def _invert_alignment(
-        alignment: Dict[int, int], ground_truth: List[Dict],
+        alignment: Dict[int, int],
     ) -> Dict[int, List[int]]:
         """Invert alignment from {gt->fd} to {fd->[gt]}."""
         inverted: Dict[int, List[int]] = {}
@@ -448,21 +495,32 @@ class DataCleanGrader:
 
             action_type = action.get("action", "")
 
-            # Penalty: deleted a row that exists in ground truth
+            # Penalty: deleted a row whose entity has NO remaining copy in final_data.
+            # Deleting a duplicate (entity still represented) is fine; destroying
+            # the last copy of a ground-truth entity is penalized.
             if action_type == "delete_row":
                 deleted = action.get("deleted_data", {})
                 eid = deleted.get("_entity_id")
                 if eid:
                     gt_eids = {r.get("_entity_id") for r in ground_truth}
                     if eid in gt_eids:
-                        penalty += 0.10
+                        # Only penalize if no row with this eid remains in final_data
+                        remaining = any(
+                            r.get("_entity_id") == eid for r in (final_data or [])
+                        )
+                        if not remaining:
+                            penalty += self.PENALTY_DELETE_VALID_ROW
                 else:
                     pk = schema.get("primary_key")
                     if pk:
                         pk_val = deleted.get(pk)
                         gt_pks = {r.get(pk) for r in ground_truth}
                         if pk_val in gt_pks:
-                            penalty += 0.10
+                            remaining = any(
+                                r.get(pk) == pk_val for r in (final_data or [])
+                            )
+                            if not remaining:
+                                penalty += self.PENALTY_DELETE_VALID_ROW
 
             # Penalty: changed a correct value to an incorrect one
             if action_type in ("fix_value", "fill_missing"):
@@ -477,9 +535,9 @@ class DataCleanGrader:
                                 # Higher penalty for wrong fix on ambiguous cell
                                 eid = gt_row.get("_entity_id", "")
                                 if (eid, col) in ambiguous_set:
-                                    penalty += 0.08
+                                    penalty += self.PENALTY_WRONG_FIX_AMBIGUOUS
                                 else:
-                                    penalty += 0.05
+                                    penalty += self.PENALTY_WRONG_FIX
                                 break
 
             # Penalty: merged two rows that are distinct entities
@@ -488,9 +546,9 @@ class DataCleanGrader:
                 eid2 = action.get("entity_id2", "")
                 if eid1 and eid2 and eid1 != eid2:
                     # Different entity IDs = merged two distinct people
-                    penalty += 0.10
+                    penalty += self.PENALTY_BAD_MERGE
 
-        return min(penalty, 0.50)  # Cap total penalties
+        return min(penalty, self.PENALTY_CAP)
 
     # ------------------------------------------------------------------
     # Bonuses
@@ -532,7 +590,7 @@ class DataCleanGrader:
                     all_fixed = False
                     break
             if all_fixed and gt_indices:
-                bonus += 0.10
+                bonus += self.BONUS_FULL_COLUMN_CLEAN
 
         # Bonus: +0.02 for correctly flagging a dirty cell (exact row+column match)
         dirty_cell_set = {(gt_i, col) for gt_i, col in dirty_cells}
@@ -547,7 +605,7 @@ class DataCleanGrader:
                         flagged_rid = flag.get("row_id", flag.get("row"))
                         actual_rid = final_data[fd_i].get("_row_id")
                         if flagged_rid == actual_rid:
-                            bonus += 0.02
+                            bonus += self.BONUS_FLAG_CORRECT
                             break
 
         # Calibrated abstention: escalated_cells scoring
@@ -559,12 +617,12 @@ class DataCleanGrader:
             esc_col = esc.get("column", "")
             if (esc_eid, esc_col) in ambiguous_set:
                 # Correct escalation on genuinely ambiguous cell
-                bonus += 0.03
+                bonus += self.BONUS_ESCALATE_AMBIGUOUS
             else:
                 # Escalation on a clearly fixable cell wastes human time
-                bonus -= 0.02
+                bonus += self.BONUS_ESCALATE_WRONG
 
-        return min(bonus, 0.30)  # Cap bonuses
+        return min(bonus, self.BONUS_CAP)
 
     @staticmethod
     def _resolve_entity_id_for_row_id(

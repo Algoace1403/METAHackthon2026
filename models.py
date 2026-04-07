@@ -154,7 +154,8 @@ class DataCleanState(State):
     escalated_cells: List[Dict[str, Any]] = Field(default_factory=list)
     max_steps: int = 30
     is_complete: bool = False
-    previous_score: float = 0.0  # For delta reward computation
+    previous_score: float = 0.0  # For delta reward computation (mutates each step)
+    initial_raw_score: float = 0.0  # Raw score of dirty data at reset (immutable)
 
     # Cost-aware intervention budget
     action_budget: float = 100.0      # Total budget for the episode

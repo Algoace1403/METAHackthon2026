@@ -169,8 +169,106 @@ def strategy_format_only(task_id: str) -> float:
     return obs.reward
 
 
+def strategy_heuristic(task_id: str) -> float:
+    """Use quality_issues to apply targeted fixes. Should beat format-only.
+
+    Applies: format standardization, null fills, duplicate merges using
+    the suggestions from the observation. Does NOT peek at ground truth.
+    """
+    env = DataCleanEnvironment()
+    obs = env.reset(seed=42, task_id=task_id)
+
+    # Phase 1: Standardize format columns (known per-task)
+    fmt_cols = FORMAT_COLUMNS.get(task_id, [])
+    for fc in fmt_cols:
+        if obs.done:
+            return obs.reward
+        obs = env.step(_action(
+            "standardize_format",
+            column=fc["column"],
+            format_type=fc["format_type"],
+        ))
+
+    # Phase 2: Merge duplicates using suggestions from quality_issues
+    merged_pairs: set = set()
+    for issue in list(obs.quality_issues):
+        if obs.done:
+            return obs.reward
+        if issue.issue_type == "duplicate" and issue.suggestion:
+            import re as _re
+            nums = _re.findall(r"row[_\s]*(?:id)?[_\s]*(\d+)", issue.suggestion, _re.IGNORECASE)
+            if not nums:
+                nums = _re.findall(r"\b(\d+)\b", issue.suggestion)
+            if len(nums) >= 2:
+                r1, r2 = int(nums[0]), int(nums[1])
+                pair = (min(r1, r2), max(r1, r2))
+                if pair not in merged_pairs:
+                    merged_pairs.add(pair)
+                    obs = env.step(_action(
+                        "merge_duplicates",
+                        row_id1=r1,
+                        row_id2=r2,
+                        strategy="merge_prefer_nonnull",
+                    ))
+                    if obs.done:
+                        return obs.reward
+
+    # Phase 3: Schema-driven cell fixes using observation data
+    # Title-case name columns, lowercase email, fix common department typos
+    DEPT_CORRECTIONS: Dict[str, str] = {
+        "engneering": "Engineering", "enginering": "Engineering",
+        "engg": "Engineering", "eng": "Engineering",
+        "mktg": "Marketing", "marketting": "Marketing",
+        "hr": "Human Resources", "h.r.": "Human Resources",
+        "human resources": "Human Resources",
+        "finance": "Finance", "fin": "Finance",
+        "sales": "Sales", "sls": "Sales",
+        "operations": "Operations", "ops": "Operations",
+    }
+
+    for row in obs.rows:
+        if obs.done:
+            return obs.reward
+        row_id = row[0]
+        for i, col in enumerate(obs.columns):
+            if col.startswith("_") or row[i] is None:
+                continue
+            val = str(row[i])
+
+            # Title-case name fields
+            if col in ("name", "first_name", "last_name", "full_name"):
+                titled = val.strip().title()
+                if titled != val:
+                    obs = env.step(_action(
+                        "fix_value", row_id=row_id, column=col, new_value=titled,
+                    ))
+                    if obs.done:
+                        return obs.reward
+
+            # Fix department typos
+            if col == "department":
+                corrected = DEPT_CORRECTIONS.get(val.lower().strip())
+                if corrected and corrected != val:
+                    obs = env.step(_action(
+                        "fix_value", row_id=row_id, column=col, new_value=corrected,
+                    ))
+                    if obs.done:
+                        return obs.reward
+
+            # Lowercase email
+            if col == "email" and val != val.lower():
+                obs = env.step(_action(
+                    "fix_value", row_id=row_id, column=col, new_value=val.lower(),
+                ))
+                if obs.done:
+                    return obs.reward
+
+    obs = env.step(_action("mark_complete"))
+    return obs.reward
+
+
 def strategy_oracle(task_id: str) -> float:
-    """Submit ground truth values for every dirty cell. Should score near 1.0."""
+    """Submit ground truth values for every dirty cell and merge duplicates. Should score near 1.0."""
     env = DataCleanEnvironment()
     obs = env.reset(seed=42, task_id=task_id)
 
@@ -184,7 +282,25 @@ def strategy_oracle(task_id: str) -> float:
         if eid:
             gt_by_eid[eid] = row
 
-    # For each row in the current data, fix every cell to match ground truth
+    # Phase 1: Delete duplicate rows (rows whose _entity_id already has a
+    # canonical row in the data). Keep the first occurrence, delete the rest.
+    state = env.state
+    seen_eids: Dict[str, int] = {}  # eid -> first row_id
+    duplicate_row_ids: list = []
+    for data_row in state.current_data:
+        eid = data_row.get("_entity_id", "")
+        row_id = data_row.get("_row_id")
+        if eid in seen_eids:
+            duplicate_row_ids.append(row_id)
+        else:
+            seen_eids[eid] = row_id
+
+    for dup_rid in duplicate_row_ids:
+        obs = env.step(_action("delete_row", row_id=dup_rid))
+        if obs.done:
+            return obs.reward
+
+    # Phase 2: Fix every cell to match ground truth
     state = env.state
     for data_row in state.current_data:
         eid = data_row.get("_entity_id", "")
@@ -220,6 +336,7 @@ STRATEGIES = {
     "no-op": strategy_noop,
     "random": strategy_random,
     "format-only": strategy_format_only,
+    "heuristic": strategy_heuristic,
     "oracle": strategy_oracle,
 }
 
@@ -258,7 +375,7 @@ def main() -> None:
         print(row)
 
     print("-" * len(header))
-    print("\nExpected: oracle ~ 1.0, no-op < oracle, random < oracle, format-only in between.")
+    print("\nExpected ordering: no-op < 0.15, random ~ 0, format-only > no-op, heuristic > format-only, oracle ~ 1.0")
     print("If oracle is not near 1.0, check that ground truth data and grader are aligned.")
 
 

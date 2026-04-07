@@ -13,7 +13,7 @@ Usage::
         while not obs.done:
             action = DataCleanAction(
                 action_type="fix_value",
-                params={"row_id": 0, "column": "name", "value": "Alice"},
+                params={"row_id": 0, "column": "name", "new_value": "Alice"},
             )
             result = env.step(action)
             obs = result.observation

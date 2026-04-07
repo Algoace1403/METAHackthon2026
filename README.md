@@ -100,11 +100,11 @@ The `-0.005` step cost penalizes unnecessary actions.
 | Component | Weight | What It Measures |
 |-----------|--------|-----------------|
 | Accuracy | 40% | Fraction of dirty cells fixed correctly |
-| Completeness | 20% | Fraction of expected non-null cells that are correct |
-| Format Consistency | 10% | Fraction of format-constrained cells matching spec |
+| Completeness | 20% | Improvement in non-null cell correctness over dirty baseline |
+| Format Consistency | 10% | Improvement in format compliance over dirty baseline |
 | Row Correctness | 10% | Penalty for wrong row count (missing or extra rows) |
-| Efficiency | 10% | `1.0 - (budget_spent / budget_allocated)` -- reward for frugality |
-| Utility | 10% | Fraction of downstream analytics probes that pass |
+| Efficiency | 10% | `1.0 - (budget_spent / budget_allocated)` -- gated on accuracy >= 10% |
+| Utility | 10% | Fraction of downstream analytics probes that pass -- gated on accuracy >= 10% |
 
 **Penalties** (deducted from composite, capped at 0.50 total):
 
@@ -146,7 +146,7 @@ The utility score is the fraction of probes that pass. Per-probe results (expect
 
 | Exploit Strategy | Why It Fails |
 |-----------------|-------------|
-| **No-op** (do nothing, mark complete) | Delta rewards penalize inaction. Dirty cells remain unfixed, accuracy stays near zero. |
+| **No-op** (do nothing, mark complete) | Score is normalized against the dirty baseline, so doing nothing yields ~0.0. Delta rewards also penalize inaction. |
 | **Delete-all** (remove every row) | `row_correctness` drops to 0.0. Each valid row deletion costs -0.10 penalty. Budget drains at 6.0 per delete. |
 | **Spam flagging** (flag everything as anomaly) | Bonus capped at 0.30. Incorrect flags provide no credit. Budget drains at 0.5 per flag. |
 | **Over-merging** (merge aggressively) | Merging distinct entities (different `_entity_id`) costs -0.10 per merge. Row count penalty compounds. |
@@ -154,13 +154,15 @@ The utility score is the fraction of probes that pass. Per-probe results (expect
 
 ## Baseline Scores
 
-*To be filled after systematic evaluation.*
+Completeness and format consistency are scored as **improvement over the dirty baseline**, not absolute values. Efficiency and utility are gated on a minimum accuracy threshold (doing nothing is laziness, not efficiency).
 
-| Task | Random Agent | Rule-Based | GPT-4o | Llama-3-70B | Your Agent |
-|------|-------------|-----------|--------|-------------|------------|
-| Easy (`easy_contacts`) | ~0.02 | -- | -- | -- | -- |
-| Medium (`medium_employees`) | ~0.01 | -- | -- | -- | -- |
-| Hard (`hard_patients`) | ~0.01 | -- | -- | -- | -- |
+| Task | Random | No-Op | Format-Only | Heuristic | Oracle |
+|------|--------|-------|-------------|-----------|--------|
+| Easy (`easy_contacts`) | 0.00 | 0.10 | 0.20 | 0.41 | 1.00 |
+| Medium (`medium_employees`) | 0.00 | 0.08 | 0.17 | 0.31 | 1.00 |
+| Hard (`hard_patients`) | 0.00 | 0.07 | 0.07 | 0.26 | 1.00 |
+
+**Ordering:** `random(0.00) < no-op(0.08) < format-only(0.15) < heuristic(0.33) < oracle(1.00)`. The no-op score (~0.08) comes entirely from row_correctness (not destroying data is worth 10%). The heuristic agent uses schema-driven fixes (format standardization, department name correction, name casing, duplicate merging) without peeking at ground truth.
 
 ## Setup & Usage
 
@@ -188,6 +190,8 @@ docker run -p 8000:8000 dataclean-env
 
 This environment is deployed as a Docker-based HF Space. The `app_port: 8000` frontmatter configures the Space to expose the FastAPI server directly.
 
+**Concurrency:** This environment runs single-session (`SUPPORTS_CONCURRENT_SESSIONS=False`) by design. Each server instance handles one episode at a time, ensuring deterministic grading and reproducible scores. Scale horizontally by running multiple containers behind a load balancer.
+
 ## API Endpoints
 
 | Endpoint | Method | Description |
@@ -211,6 +215,32 @@ python inference.py
 ```
 
 The inference script runs all three tasks sequentially and prints a JSON results block.
+
+## RL Training with GRPO
+
+This environment supports reinforcement learning training via [TRL's GRPOTrainer](https://huggingface.co/docs/trl/grpo_trainer) using the `environment_factory` pattern. TRL creates one environment instance per rollout and exposes the environment's `reset()` and `step()` methods as tools the model can call during generation.
+
+```bash
+# Install training dependencies
+pip install "openenv-dataclean-env[train]"
+
+# Train an agent with GRPO (requires GPU)
+accelerate launch scripts/train_grpo.py \
+    --model Qwen/Qwen3-0.6B \
+    --task easy_contacts \
+    --num-episodes 200
+```
+
+**Reward decomposition for GRPO** (4 signals for richer gradient):
+
+| Signal | Source | What It Rewards |
+|--------|--------|----------------|
+| `reward_valid_action` | Completion text | Model outputs parseable JSON with valid action_type |
+| `reward_episode_score` | `env.reward` | Final composite grading score at episode end |
+| `reward_efficiency` | `env._state` | Frugal budget usage (less cost = higher reward) |
+| `reward_no_destruction` | `env._state` | Avoiding destructive actions (delete_row, wrong merges) |
+
+Reward functions read accumulated state from the environment instance provided via `environment_factory`. See `scripts/reward_functions.py` and `scripts/train_grpo.py` for implementation.
 
 ## Research Uses
 
