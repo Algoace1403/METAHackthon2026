@@ -2,12 +2,12 @@
 
 Runs an LLM-based data-cleaning agent through all three tasks
 (easy_contacts, medium_employees, hard_patients), collects scores,
-and prints a JSON results block for the validator.
+and emits [START]/[STEP]/[END] lines to stdout per OpenEnv spec.
 
 Environment variables required:
-    API_BASE_URL  - LLM endpoint URL
-    MODEL_NAME    - model identifier (e.g. "meta-llama/Llama-3-8B-Instruct")
-    HF_TOKEN      - API key for the LLM endpoint
+    API_BASE_URL  - LLM endpoint URL (default: https://api.openai.com/v1)
+    MODEL_NAME    - model identifier (default: gpt-4.1-mini)
+    HF_TOKEN      - Hugging Face API token (mandatory, no default)
 
 Usage:
     API_BASE_URL=... MODEL_NAME=... HF_TOKEN=... python inference.py
@@ -33,16 +33,13 @@ from dataclean_env.models import DataCleanObservation
 # Configuration
 # ---------------------------------------------------------------------------
 
-API_KEY: str = os.environ.get("HF_TOKEN", "") or os.environ.get("API_KEY", "")
-API_BASE_URL: str = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME: str = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-IMAGE_NAME: Optional[str] = os.environ.get("IMAGE_NAME")
+# Read environment variables with defaults where required
+API_BASE_URL: str = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME: str = os.getenv("MODEL_NAME", "gpt-4.1-mini")
+HF_TOKEN: Optional[str] = os.getenv("HF_TOKEN")
 
 # Fallback: direct HTTP connection to environment server
-ENV_BASE_URL: str = os.environ.get(
-    "ENV_BASE_URL",
-    "http://localhost:8000",
-)
+ENV_BASE_URL: str = os.getenv("ENV_BASE_URL", "http://localhost:8000")
 
 TASKS: List[str] = ["easy_contacts", "medium_employees", "hard_patients"]
 BENCHMARK: str = "dataclean_env"
@@ -341,10 +338,10 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
     )
 
 
-def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
+def log_end(success: bool, steps: int, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     print(
-        f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}",
+        f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}",
         flush=True,
     )
 
@@ -425,7 +422,7 @@ def run_task(
         print(f"  [ERROR] Task failed: {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
 
-    log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+    log_end(success=success, steps=steps_taken, rewards=rewards)
 
     print(f"  Final score: {score:.4f}", file=sys.stderr)
     return score
@@ -437,21 +434,20 @@ def run_task(
 
 
 async def async_main() -> int:
-    """Run all tasks using async env client (from_docker_image if IMAGE_NAME set)."""
-    if not API_KEY:
-        print("ERROR: HF_TOKEN / API_KEY environment variable is not set", file=sys.stderr)
-        return 1
+    """Run all tasks and emit [START]/[STEP]/[END] to stdout."""
+    if HF_TOKEN is None:
+        raise ValueError("HF_TOKEN environment variable is required")
 
     # Set global timeout (Unix only; no-op on Windows)
     if hasattr(signal, "SIGALRM"):
         signal.signal(signal.SIGALRM, _timeout_handler)
         signal.alarm(GLOBAL_TIMEOUT_SECONDS)
 
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    # Initialize OpenAI client per hackathon spec
+    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
     print(f"LLM endpoint: {API_BASE_URL}", file=sys.stderr)
     print(f"Model: {MODEL_NAME}", file=sys.stderr)
-    print(f"Image: {IMAGE_NAME or 'N/A (using HTTP)'}", file=sys.stderr)
     print(f"Environment: {ENV_BASE_URL}", file=sys.stderr)
     print(f"Tasks: {TASKS}", file=sys.stderr)
 

@@ -10,13 +10,15 @@ Usage::
     with DataCleanEnv(base_url="http://localhost:8000").sync() as env:
         result = env.reset()
         obs = result.observation
-        while not obs.done:
+        done = False
+        while not done:
             action = DataCleanAction(
                 action_type="fix_value",
                 params={"row_id": 0, "column": "name", "new_value": "Alice"},
             )
             result = env.step(action)
             obs = result.observation
+            done = result.done
 """
 
 from __future__ import annotations
