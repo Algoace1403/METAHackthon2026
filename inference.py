@@ -33,23 +33,24 @@ from dataclean_env.models import DataCleanObservation
 # Configuration
 # ---------------------------------------------------------------------------
 
-API_BASE_URL: str = os.environ.get("API_BASE_URL", "")
-MODEL_NAME: str = os.environ.get("MODEL_NAME", "")
-HF_TOKEN: str = os.environ.get("HF_TOKEN", "")
+API_KEY: str = os.environ.get("HF_TOKEN", "") or os.environ.get("API_KEY", "")
+API_BASE_URL: str = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME: str = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+IMAGE_NAME: Optional[str] = os.environ.get("IMAGE_NAME")
 
-# URL of the DataClean-Env environment server.
-# The validator may set ENV_BASE_URL, or we fall back to localhost.
-# IMPORTANT: Update the fallback URL to your deployed HF Space before submission.
+# Fallback: direct HTTP connection to environment server
 ENV_BASE_URL: str = os.environ.get(
     "ENV_BASE_URL",
     "http://localhost:8000",
 )
 
 TASKS: List[str] = ["easy_contacts", "medium_employees", "hard_patients"]
+BENCHMARK: str = "dataclean_env"
 SEED: int = 42
 TEMPERATURE: float = 0.0
 MAX_TOKENS: int = 1024
 GLOBAL_TIMEOUT_SECONDS: int = 1100  # 18.3 min safety margin
+SUCCESS_SCORE_THRESHOLD: float = 0.1
 
 # ---------------------------------------------------------------------------
 # Timeout handler
@@ -323,6 +324,32 @@ def _call_llm(
 
 
 # ---------------------------------------------------------------------------
+# Stdout logging (mandatory format)
+# ---------------------------------------------------------------------------
+
+
+def log_start(task: str, env: str, model: str) -> None:
+    print(f"[START] task={task} env={env} model={model}", flush=True)
+
+
+def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
+    error_val = error if error else "null"
+    done_val = str(done).lower()
+    print(
+        f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}",
+        flush=True,
+    )
+
+
+def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
+    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+    print(
+        f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}",
+        flush=True,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Task runner
 # ---------------------------------------------------------------------------
 
@@ -333,59 +360,75 @@ def run_task(
     task_id: str,
 ) -> float:
     """Run a single data-cleaning task and return the final score."""
-    print(f"\n{'='*60}", file=sys.stderr)
-    print(f"  Task: {task_id}", file=sys.stderr)
-    print(f"{'='*60}", file=sys.stderr)
+    print(f"\n  Task: {task_id}", file=sys.stderr)
 
-    with DataCleanEnv(base_url=env_base_url).sync() as env:
-        result = env.reset(seed=SEED, task_id=task_id)
-        obs: DataCleanObservation = result.observation
+    rewards: List[float] = []
+    steps_taken = 0
+    score = 0.0
+    success = False
 
-        print(f"  Initial issues: {obs.data_summary.issue_count}", file=sys.stderr)
-        print(f"  Max steps: {obs.max_steps}", file=sys.stderr)
+    log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
 
-        messages: List[Dict[str, str]] = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-        ]
+    try:
+        with DataCleanEnv(base_url=env_base_url).sync() as env:
+            result = env.reset(seed=SEED, task_id=task_id)
+            obs: DataCleanObservation = result.observation
 
-        step = 0
-        done = False
-        while not done:
-            step += 1
-            user_msg = _build_user_prompt(obs)
-            messages.append({"role": "user", "content": user_msg})
+            print(f"  Initial issues: {obs.data_summary.issue_count}", file=sys.stderr)
+            print(f"  Max steps: {obs.max_steps}", file=sys.stderr)
 
-            # Keep conversation manageable: only system + last 6 exchanges
-            if len(messages) > 13:
-                messages = [messages[0]] + messages[-12:]
+            messages: List[Dict[str, str]] = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+            ]
 
-            llm_response = _call_llm(client, messages)
-            messages.append({"role": "assistant", "content": llm_response})
+            step = 0
+            done = False
+            while not done:
+                step += 1
+                user_msg = _build_user_prompt(obs)
+                messages.append({"role": "user", "content": user_msg})
 
-            action = _parse_action(llm_response)
-            print(
-                f"  Step {step}: {action.action_type} "
-                f"{json.dumps(action.params) if action.params else ''}",
-                file=sys.stderr,
-            )
+                # Keep conversation manageable: only system + last 6 exchanges
+                if len(messages) > 13:
+                    messages = [messages[0]] + messages[-12:]
 
-            try:
-                result = env.step(action)
-                obs = result.observation
-                done = result.done
-            except Exception as e:
-                print(f"  [ERROR] Environment step failed: {e}", file=sys.stderr)
-                traceback.print_exc(file=sys.stderr)
-                # Break on env error to avoid stale obs reuse
-                break
+                llm_response = _call_llm(client, messages)
+                messages.append({"role": "assistant", "content": llm_response})
 
-        # Extract final score from reward
-        score = 0.0
-        if result is not None and result.reward is not None:
-            score = float(result.reward)
+                action = _parse_action(llm_response)
+                action_str = f"{action.action_type}({json.dumps(action.params) if action.params else ''})"
 
-        print(f"  Final score: {score:.4f}", file=sys.stderr)
-        return score
+                error: Optional[str] = None
+                try:
+                    result = env.step(action)
+                    obs = result.observation
+                    done = result.done
+                    reward = result.reward if result.reward is not None else 0.0
+                except Exception as e:
+                    print(f"  [ERROR] Environment step failed: {e}", file=sys.stderr)
+                    traceback.print_exc(file=sys.stderr)
+                    reward = 0.0
+                    error = str(e)
+                    done = True
+
+                rewards.append(float(reward))
+                steps_taken = step
+
+                log_step(step=step, action=action_str, reward=float(reward), done=done, error=error)
+
+            # Extract final score from last reward
+            score = float(result.reward) if result is not None and result.reward is not None else 0.0
+            score = min(max(score, 0.0), 1.0)  # clamp to [0, 1]
+            success = score >= SUCCESS_SCORE_THRESHOLD
+
+    except Exception as e:
+        print(f"  [ERROR] Task failed: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+
+    log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+
+    print(f"  Final score: {score:.4f}", file=sys.stderr)
+    return score
 
 
 # ---------------------------------------------------------------------------
@@ -393,37 +436,24 @@ def run_task(
 # ---------------------------------------------------------------------------
 
 
-def main() -> int:
-    """Run all tasks and print results."""
-    # Validate environment variables
-    if not API_BASE_URL:
-        print("ERROR: API_BASE_URL environment variable is not set", file=sys.stderr)
+async def async_main() -> int:
+    """Run all tasks using async env client (from_docker_image if IMAGE_NAME set)."""
+    if not API_KEY:
+        print("ERROR: HF_TOKEN / API_KEY environment variable is not set", file=sys.stderr)
         return 1
-    if not MODEL_NAME:
-        print("ERROR: MODEL_NAME environment variable is not set", file=sys.stderr)
-        return 1
-    if not HF_TOKEN:
-        print("ERROR: HF_TOKEN environment variable is not set", file=sys.stderr)
-        return 1
-
-    print(f"Environment URL: {ENV_BASE_URL}", file=sys.stderr)
 
     # Set global timeout (Unix only; no-op on Windows)
     if hasattr(signal, "SIGALRM"):
         signal.signal(signal.SIGALRM, _timeout_handler)
         signal.alarm(GLOBAL_TIMEOUT_SECONDS)
 
-    # Initialize OpenAI client pointed at the provided endpoint
-    client = OpenAI(
-        base_url=API_BASE_URL,
-        api_key=HF_TOKEN,
-    )
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
     print(f"LLM endpoint: {API_BASE_URL}", file=sys.stderr)
     print(f"Model: {MODEL_NAME}", file=sys.stderr)
+    print(f"Image: {IMAGE_NAME or 'N/A (using HTTP)'}", file=sys.stderr)
     print(f"Environment: {ENV_BASE_URL}", file=sys.stderr)
     print(f"Tasks: {TASKS}", file=sys.stderr)
-    print(f"Seed: {SEED}, Temperature: {TEMPERATURE}", file=sys.stderr)
 
     scores: Dict[str, float] = {}
 
@@ -444,31 +474,20 @@ def main() -> int:
     if hasattr(signal, "SIGALRM"):
         signal.alarm(0)
 
-    # Print results
+    # Summary to stderr
     avg_score = sum(scores.values()) / len(scores) if scores else 0.0
-
-    print(f"\n{'='*60}", file=sys.stderr)
-    print("  RESULTS", file=sys.stderr)
-    print(f"{'='*60}", file=sys.stderr)
+    print(f"\n  RESULTS", file=sys.stderr)
     for task_id, score in scores.items():
         print(f"  {task_id}: {score:.4f}", file=sys.stderr)
-    print(f"  ---", file=sys.stderr)
     print(f"  Average: {avg_score:.4f}", file=sys.stderr)
-    print(f"{'='*60}", file=sys.stderr)
-
-    # JSON output block for validator parsing
-    output = {
-        "scores": scores,
-        "average_score": round(avg_score, 4),
-        "model": MODEL_NAME,
-        "seed": SEED,
-        "temperature": TEMPERATURE,
-    }
-    print(f"\n--- JSON OUTPUT ---")
-    print(json.dumps(output, indent=2))
-    print(f"--- END JSON OUTPUT ---")
 
     return 0
+
+
+def main() -> int:
+    """Sync entry point — delegates to async_main."""
+    import asyncio
+    return asyncio.run(async_main())
 
 
 if __name__ == "__main__":
