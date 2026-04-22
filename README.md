@@ -1,6 +1,6 @@
 ---
-title: DataClean-Env Environment Server
-emoji: "\U0001F9F9"
+title: MediBill-Env Environment Server
+emoji: "\U0001F3E5"
 colorFrom: blue
 colorTo: green
 sdk: docker
@@ -8,9 +8,58 @@ pinned: false
 app_port: 8000
 tags:
   - openenv
+  - medical-billing
+  - policy-drift
 ---
 
-# DataClean-Env: A Trustworthy Data Agent Benchmark for OpenEnv
+# MediBill-Env — Round 2 (Meta × Scaler OpenEnv Hackathon)
+
+OpenEnv environment where an LLM agent closes cashless Indian health-insurance
+claims inside the IRDAI-mandated 3-hour clock while the insurer's policy
+rules drift silently mid-episode. The agent's only way to observe the
+new rules is a fresh `insurance_lookup` call — submissions are graded
+against the policy active at submit time, not what the agent remembers.
+
+## Licensing and data disclaimer
+
+This environment uses only public-domain or openly-licensed medical coding
+systems:
+
+- **ICD-10-CM** (CMS, public domain) — diagnosis codes
+- **LOINC** (Regenstrief License) — labs
+- **RxNorm** (NLM, public domain) — drug names
+- **HCPCS Level II** (CMS, public domain) — supplies where relevant
+- **CGHS package rates** (Govt. of India, MoHFW public rate list) — INR pricing
+- **SYNTH-PROC-v1** (this project, MIT licence) — synthetic procedure ontology
+
+SYNTH-PROC-v1 is a synthetic procedure ontology created for this project.
+It is **NOT AMA CPT**, does **NOT map to CPT**, and must not be used for
+real billing. All patient data is synthetic. This project is for research,
+education, and RL training only.
+
+We deliberately do not use: AMA CPT codes (copyrighted), SNOMED CT (UMLS
+redistribution restrictions), NABH codes (copyrighted), or raw MIMIC-IV
+data (credentialed access + DUA).
+
+## Round 2 package (`medibill/`)
+
+- **Entry point:** `medibill.server.app:app` (FastAPI, port 8000)
+- **Client:** `medibill.client.MediBillEnv` (WebSocket; use this for
+  multi-step rollouts — REST `/step` is stateless by design)
+- **Training stack:** `medibill.train_sft` + `medibill.sft_colab`
+- **Documentation:** `docs/round2-spec-v3.md` (design), `docs/colab_recipe.md`
+  (paste-ready Colab runbook)
+
+## Round 1 lineage — DataClean-Env
+
+Round 2 extends a Round 1 submission built around a generic data-cleaning
+environment. The remainder of this README is the Round 1 technical
+description, kept here for lineage and because the Round 1 HF Space is
+still live.
+
+---
+
+# DataClean-Env: A Trustworthy Data Agent Benchmark for OpenEnv (Round 1)
 
 A deterministic, cost-aware reinforcement learning environment that measures whether AI agents can improve usable data quality without over-editing, collapsing distinct entities, or wasting intervention budget.
 

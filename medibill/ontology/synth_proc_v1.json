@@ -1,0 +1,285 @@
+{
+  "_meta": {
+    "ontology_id": "SYNTH-PROC-v1",
+    "version": "1.0.0",
+    "license": "MIT",
+    "creator": "MediBill-Env (Meta x Scaler OpenEnv Hackathon Round 2)",
+    "created": "2026-04-20",
+    "description": "Synthetic procedure ontology for training medical-billing agents. Not derived from or mapped to AMA CPT. Intended for research, education, and reinforcement-learning environments only. Must NOT be used for real billing, clinical coding, or claims submission.",
+    "disclaimer": "Any resemblance between SYNTH-PROC-v1 codes and AMA CPT codes is coincidental. This ontology is an original work. CGHS cross-references are advisory only and point to the Central Government Health Scheme package rate list (Govt. of India, MoHFW public rate list).",
+    "specialties": ["CARD", "ORTH", "GASTRO", "RESP", "GEN"],
+    "total_codes": 30
+  },
+  "codes": [
+    {
+      "code": "PROC-CARD-001",
+      "specialty": "CARD",
+      "description": "Baseline electrocardiogram (ECG), 12-lead",
+      "cghs_reference": "CGHS-CARD-0001",
+      "cghs_rate_inr": 120,
+      "typical_icd10_ranges": ["I20", "I21", "I25", "I48", "I50"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-CARD-004",
+      "specialty": "CARD",
+      "description": "Transthoracic echocardiography, adult",
+      "cghs_reference": "CGHS-CARD-0042",
+      "cghs_rate_inr": 900,
+      "typical_icd10_ranges": ["I25", "I42", "I50"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-CARD-009",
+      "specialty": "CARD",
+      "description": "Coronary angiography, single vessel",
+      "cghs_reference": "CGHS-CARD-0189",
+      "cghs_rate_inr": 12000,
+      "typical_icd10_ranges": ["I20", "I21", "I25"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-CARD-014",
+      "specialty": "CARD",
+      "description": "Percutaneous coronary intervention with single drug-eluting stent",
+      "cghs_reference": "CGHS-CARD-0421",
+      "cghs_rate_inr": 65000,
+      "typical_icd10_ranges": ["I21", "I22", "I25"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-CARD-022",
+      "specialty": "CARD",
+      "description": "Coronary artery bypass grafting (CABG), single graft",
+      "cghs_reference": "CGHS-CARD-0510",
+      "cghs_rate_inr": 158000,
+      "typical_icd10_ranges": ["I25", "I21"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-CARD-031",
+      "specialty": "CARD",
+      "description": "Permanent pacemaker implantation, single chamber",
+      "cghs_reference": "CGHS-CARD-0611",
+      "cghs_rate_inr": 92000,
+      "typical_icd10_ranges": ["I44", "I45", "I47", "I49"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-ORTH-005",
+      "specialty": "ORTH",
+      "description": "Plain radiograph of knee, two views",
+      "cghs_reference": "CGHS-ORTH-0014",
+      "cghs_rate_inr": 180,
+      "typical_icd10_ranges": ["M17", "M23", "S83"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-ORTH-012",
+      "specialty": "ORTH",
+      "description": "Closed reduction of distal radius fracture without anesthesia",
+      "cghs_reference": "CGHS-ORTH-0088",
+      "cghs_rate_inr": 1500,
+      "typical_icd10_ranges": ["S52"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-ORTH-019",
+      "specialty": "ORTH",
+      "description": "MRI of lumbar spine without contrast",
+      "cghs_reference": "CGHS-ORTH-0131",
+      "cghs_rate_inr": 3400,
+      "typical_icd10_ranges": ["M51", "M54"],
+      "pre_auth_threshold_inr": 2500
+    },
+    {
+      "code": "PROC-ORTH-024",
+      "specialty": "ORTH",
+      "description": "Arthroscopic knee meniscectomy",
+      "cghs_reference": "CGHS-ORTH-0217",
+      "cghs_rate_inr": 24500,
+      "typical_icd10_ranges": ["M23", "S83"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-ORTH-032",
+      "specialty": "ORTH",
+      "description": "Total knee replacement, unilateral, with standard prosthesis",
+      "cghs_reference": "CGHS-ORTH-0340",
+      "cghs_rate_inr": 98000,
+      "typical_icd10_ranges": ["M17"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-ORTH-038",
+      "specialty": "ORTH",
+      "description": "Dynamic hip screw fixation for intertrochanteric fracture",
+      "cghs_reference": "CGHS-ORTH-0412",
+      "cghs_rate_inr": 55000,
+      "typical_icd10_ranges": ["S72"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-GASTRO-003",
+      "specialty": "GASTRO",
+      "description": "Upper gastrointestinal endoscopy, diagnostic",
+      "cghs_reference": "CGHS-GASTRO-0021",
+      "cghs_rate_inr": 1800,
+      "typical_icd10_ranges": ["K20", "K21", "K25", "K29", "K44"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-GASTRO-007",
+      "specialty": "GASTRO",
+      "description": "Colonoscopy, diagnostic, with polypectomy",
+      "cghs_reference": "CGHS-GASTRO-0054",
+      "cghs_rate_inr": 4200,
+      "typical_icd10_ranges": ["K50", "K51", "K52", "K62", "K63"],
+      "pre_auth_threshold_inr": 2500
+    },
+    {
+      "code": "PROC-GASTRO-015",
+      "specialty": "GASTRO",
+      "description": "Laparoscopic cholecystectomy",
+      "cghs_reference": "CGHS-GASTRO-0127",
+      "cghs_rate_inr": 35000,
+      "typical_icd10_ranges": ["K80", "K81"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-GASTRO-021",
+      "specialty": "GASTRO",
+      "description": "Inguinal hernia repair, open mesh",
+      "cghs_reference": "CGHS-GASTRO-0172",
+      "cghs_rate_inr": 22000,
+      "typical_icd10_ranges": ["K40"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-GASTRO-028",
+      "specialty": "GASTRO",
+      "description": "Appendectomy, open",
+      "cghs_reference": "CGHS-GASTRO-0231",
+      "cghs_rate_inr": 19500,
+      "typical_icd10_ranges": ["K35", "K36"],
+      "pre_auth_threshold_inr": 10000
+    },
+    {
+      "code": "PROC-RESP-002",
+      "specialty": "RESP",
+      "description": "Spirometry with bronchodilator response",
+      "cghs_reference": "CGHS-RESP-0008",
+      "cghs_rate_inr": 450,
+      "typical_icd10_ranges": ["J44", "J45"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-RESP-006",
+      "specialty": "RESP",
+      "description": "Chest radiograph, PA view",
+      "cghs_reference": "CGHS-RESP-0022",
+      "cghs_rate_inr": 150,
+      "typical_icd10_ranges": ["J18", "J44", "J45", "J90"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-RESP-013",
+      "specialty": "RESP",
+      "description": "High-resolution CT of thorax",
+      "cghs_reference": "CGHS-RESP-0067",
+      "cghs_rate_inr": 3800,
+      "typical_icd10_ranges": ["J44", "J84", "J98"],
+      "pre_auth_threshold_inr": 2500
+    },
+    {
+      "code": "PROC-RESP-019",
+      "specialty": "RESP",
+      "description": "Flexible bronchoscopy with bronchoalveolar lavage",
+      "cghs_reference": "CGHS-RESP-0104",
+      "cghs_rate_inr": 7500,
+      "typical_icd10_ranges": ["J84", "J98", "C34"],
+      "pre_auth_threshold_inr": 2500
+    },
+    {
+      "code": "PROC-RESP-025",
+      "specialty": "RESP",
+      "description": "Mechanical ventilation, per 24-hour episode",
+      "cghs_reference": "CGHS-RESP-0158",
+      "cghs_rate_inr": 8000,
+      "typical_icd10_ranges": ["J80", "J96", "J18"],
+      "pre_auth_threshold_inr": 2500
+    },
+    {
+      "code": "PROC-GEN-001",
+      "specialty": "GEN",
+      "description": "Comprehensive metabolic panel",
+      "cghs_reference": "CGHS-GEN-0003",
+      "cghs_rate_inr": 320,
+      "typical_icd10_ranges": ["E10", "E11", "N18"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-GEN-004",
+      "specialty": "GEN",
+      "description": "Complete blood count with differential",
+      "cghs_reference": "CGHS-GEN-0009",
+      "cghs_rate_inr": 180,
+      "typical_icd10_ranges": ["D50", "D64", "R50"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-GEN-008",
+      "specialty": "GEN",
+      "description": "Hospital inpatient room, semi-private, per day",
+      "cghs_reference": "CGHS-GEN-0021",
+      "cghs_rate_inr": 1500,
+      "typical_icd10_ranges": [],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-GEN-012",
+      "specialty": "GEN",
+      "description": "ICU stay, adult, per day",
+      "cghs_reference": "CGHS-GEN-0047",
+      "cghs_rate_inr": 5000,
+      "typical_icd10_ranges": [],
+      "pre_auth_threshold_inr": 2500
+    },
+    {
+      "code": "PROC-GEN-015",
+      "specialty": "GEN",
+      "description": "Consultation, specialist, outpatient",
+      "cghs_reference": "CGHS-GEN-0058",
+      "cghs_rate_inr": 300,
+      "typical_icd10_ranges": [],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-GEN-019",
+      "specialty": "GEN",
+      "description": "HbA1c quantitative assay",
+      "cghs_reference": "CGHS-GEN-0074",
+      "cghs_rate_inr": 260,
+      "typical_icd10_ranges": ["E10", "E11", "R73"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-GEN-023",
+      "specialty": "GEN",
+      "description": "Lipid panel",
+      "cghs_reference": "CGHS-GEN-0082",
+      "cghs_rate_inr": 360,
+      "typical_icd10_ranges": ["E78", "I25"],
+      "pre_auth_threshold_inr": null
+    },
+    {
+      "code": "PROC-GEN-028",
+      "specialty": "GEN",
+      "description": "Intravenous fluid administration, per hour",
+      "cghs_reference": "CGHS-GEN-0109",
+      "cghs_rate_inr": 80,
+      "typical_icd10_ranges": [],
+      "pre_auth_threshold_inr": null
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 spec_version: 1
-name: dataclean_env
+name: medibill
 type: space
 runtime: fastapi
-app: dataclean_env.server.app:app
+app: medibill.server.app:app
 port: 8000
