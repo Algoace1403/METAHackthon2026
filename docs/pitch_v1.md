@@ -106,6 +106,46 @@
 
 ---
 
+## Video recording recipe (for the <2 min minimum-requirement artifact)
+
+If SFT doesn't ship by Friday end-of-day, or if you want a safety-copy even with SFT numbers, record `medibill.demo_runner` running live. Command for a full-terminal screen recording:
+
+```bash
+# macOS built-in screen recording: Cmd+Shift+5 → Record Selected Portion
+# Start recording BEFORE running the command below; stop when episode complete.
+
+python3 -m medibill.demo_runner --seed 44 --max-narrated-steps 20
+```
+
+The script emits:
+- Title banner identifying hard_drift + seed
+- Step-by-step agent actions (first 20 steps narrated, rest elided)
+- A red "*** DRIFT FIRED SILENTLY ***" line when the policy mutates
+- A green "Agent has detected drift" line when the scripted agent re-queries
+- Final composite score (~0.76 on hard_drift) with per-axis breakdown
+
+Total run time ~15 seconds on a modern laptop, giving ~60 seconds of narratable screen content once you speak over it. Fits the <2-minute limit comfortably.
+
+### Narration script for the video (≤90 seconds)
+
+> "This is MediBill-Env, a synthetic medical-billing environment for the Meta OpenEnv hackathon. Twelve insurance claims, three tools, six-axis deterministic grader. Watch what happens.
+>
+> The agent starts by asking the insurer for the current policy — version 1.3 — and begins coding claims against it.
+>
+> [pause at step 23 when DRIFT FIRED appears]
+>
+> At step 23, the insurer's policy silently updates. No announcement, no flag, no observation field. The agent is still working with its cached view of version 1.3, and some of the rules have quietly changed.
+>
+> [pause at 'Agent has detected drift']
+>
+> The agent's next insurance_lookup picks up the new policy version, 1.4. From this point it uses the new rules.
+>
+> [point at final score]
+>
+> Final composite score: 0.76 out of 1.0. That 0.24-point gap from a perfect score is the signal we train against. Two of our six axes — abstention and drift bonus — are RL-only targets in our pipeline, not SFT targets. That scoping is explicit in our spec. Thank you."
+
+---
+
 ## Q&A anticipated (prepare, do not read)
 
 | Question | Answer |
