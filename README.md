@@ -41,6 +41,43 @@ We deliberately do not use: AMA CPT codes (copyrighted), SNOMED CT (UMLS
 redistribution restrictions), NABH codes (copyrighted), or raw MIMIC-IV
 data (credentialed access + DUA).
 
+## How it fits together
+
+```mermaid
+flowchart LR
+    subgraph Agent["LLM Agent (Qwen2.5-3B + LoRA, or scripted/random/no_op)"]
+        A[choose action]
+    end
+    subgraph Env["MediBill-Env (FastAPI + WebSocket on port 8000)"]
+        S[(state: 12 claims · policy v1.3 · budget · tool_log)]
+        T{drift scheduler<br>fires once at<br>step ∈ [10, 39]}
+    end
+    subgraph Tools["5 tools"]
+        E1[ehr_query]
+        E2[insurance_lookup]
+        E3[coding_engine]
+        E4[escalate_to_human]
+        E5[submit_claim]
+    end
+    subgraph Grader["6-axis grader (deterministic, disjoint partition)"]
+        G1[final_correctness 45%]
+        G2[policy_compliance 20%]
+        G3[abstention_quality 15%]
+        G4[process_auditability 10%]
+        G5[efficiency 5%]
+        G6[drift_bonus 5%]
+    end
+    A -->|action| S
+    S -->|observation| A
+    S --> T
+    T -->|silently mutates active_policy| S
+    A -.calls.-> E1 & E2 & E3 & E4 & E5
+    S -->|on submit_claim| Grader
+    Grader -->|composite score| out([reward])
+```
+
+`policy_compliance` and `drift_bonus` are graded against the policy *at submit time*. The only path to the new rules after drift is a fresh `insurance_lookup` call — there is no observation flag.
+
 ## Round 2 package (`medibill/`)
 
 - **Entry point:** `medibill.server.app:app` (FastAPI, port 8000)
