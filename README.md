@@ -50,6 +50,43 @@ data (credentialed access + DUA).
 - **Documentation:** `docs/round2-spec-v3.md` (design), `docs/colab_recipe.md`
   (paste-ready Colab runbook)
 
+## Headline result — three baselines, one drift gap
+
+![MediBill-Env baselines: random / no_op / scripted across the three task tiers, n=20 seeds each, with the 0.24 drift acceptance gap on hard_drift highlighted in red](docs/img/baselines.png)
+
+*20-seed reproducibility sweep across all three task tiers, 0 errors, 0.9 s wallclock. Per-seed scores in [`docs/baseline_reproducibility.csv`](docs/baseline_reproducibility.csv) (180 rows, all measured). On the no-drift tiers the tool-faithful scripted baseline holds at exactly 1.00; on `hard_drift` it drops to 0.76. That **0.24 drift acceptance gap** is the entire reason this environment is interesting — and it is the behavioural target the training pipeline is designed to close.*
+
+**Five exploit patterns** — `ack_spammer`, `escalate_everything`, `oscillator`, `double_count`, `periodic_lookup` — are explicitly neutralised: all five score ≤ no_op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance. Gate runs on every commit (`python -m medibill.test_exploits`).
+
+## Reproduce the headline number on any laptop
+
+```bash
+git clone https://github.com/Algoace1403/METAHackthon2026 && cd METAHackthon2026
+pip install -e .
+python -m medibill.demo_runner --seed 44       # one narrated episode, ~30 s
+python -m pytest tests/ -q                     # 228 tests, ~1 s
+python -m medibill.test_exploits               # 5-exploit gate, ~5 s
+```
+
+The narrated demo run lands at composite score **0.762** on seed 44: drift fires silently at step 23, the scripted policy never re-queries `insurance_lookup`, submits the remaining claims under the now-stale `v1.3` rules. That 0.762 is the *cost of carrying a stale policy model into submit*, not a sign of recovery.
+
+## Materials referenced from this README
+
+| Artefact | Path |
+|---|---|
+| Authoritative design spec (v3) | [`docs/round2-spec-v3.md`](docs/round2-spec-v3.md) |
+| HuggingFace blog draft | [`docs/hf_blog_draft.md`](docs/hf_blog_draft.md) |
+| 6-slide pitch deck script | [`docs/pitch_v1.md`](docs/pitch_v1.md) |
+| Slide-by-slide paste-ready outline | [`docs/deck_outline.md`](docs/deck_outline.md) |
+| Demo video recording script | [`docs/video_recording_script.md`](docs/video_recording_script.md) |
+| Discord submission post template | [`docs/discord_submission.md`](docs/discord_submission.md) |
+| Colab SFT runbook | [`docs/colab_recipe.md`](docs/colab_recipe.md) |
+| Colab quick-start notebook | [`notebooks/sft_quickstart.ipynb`](notebooks/sft_quickstart.ipynb) |
+| HF Space deployment guide | [`docs/hf_space_push.md`](docs/hf_space_push.md) |
+| Baseline reproducibility CSV (180 rows) | [`docs/baseline_reproducibility.csv`](docs/baseline_reproducibility.csv) |
+| Demo video | *[link will be added after recording]* |
+| HuggingFace Space | *[link will be added after push]* |
+
 ## Round 1 lineage — DataClean-Env (historical only)
 
 > **Everything below this banner is the Round 1 submission.** It is kept
