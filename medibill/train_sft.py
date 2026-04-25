@@ -330,12 +330,9 @@ def train(
     # Imports deferred until CUDA is confirmed so dev hosts without
     # these packages can still run `prepare`.
     from datasets import load_dataset  # noqa: WPS433
-    from trl import (  # noqa: WPS433
-        DataCollatorForCompletionOnlyLM,
-        SFTConfig,
-        SFTTrainer,
-    )
+    from trl import SFTConfig, SFTTrainer  # noqa: WPS433
     from unsloth import FastLanguageModel  # noqa: WPS433
+    from unsloth.chat_templates import train_on_responses_only  # noqa: WPS433
 
     ds = load_dataset("json", data_files=str(dataset_path), split="train")
 
@@ -377,26 +374,6 @@ def train(
         }
     ).select_columns(["text"])
 
-    # Mask loss to assistant tokens only. We pass response_template AND
-    # instruction_template as TOKEN-ID lists rather than strings: BPE
-    # boundaries can shift when ``<|im_start|>assistant\n`` is tokenised
-    # in isolation vs inside a full ChatML string, and a string-template
-    # subsequence search will then silently fail to match — leaving the
-    # collator masking nothing and the model training on user/system
-    # tokens too. Token-ID matching is exact and robust.
-    response_template_ids = tokenizer.encode(
-        "<|im_start|>assistant\n", add_special_tokens=False
-    )
-    instruction_template_ids = tokenizer.encode(
-        "<|im_start|>user\n", add_special_tokens=False
-    )
-    collator = DataCollatorForCompletionOnlyLM(
-        response_template=response_template_ids,
-        instruction_template=instruction_template_ids,
-        tokenizer=tokenizer,
-        mlm=False,
-    )
-
     cfg = SFTConfig(
         output_dir=str(output_dir),
         num_train_epochs=num_train_epochs,
@@ -415,9 +392,9 @@ def train(
         # at LR 1e-4. ~3% of total steps is standard for LoRA SFT.
         warmup_ratio=0.03,
         max_seq_length=max_seq_length,
-        # We pre-applied the chat template above and projected to a single
-        # ``text`` column. trl's prepare path will tokenise that column,
-        # which is what DataCollatorForCompletionOnlyLM expects.
+        # We pre-applied the chat template above; SFTTrainer will tokenise
+        # ``text`` for us. Loss masking happens AFTER trainer construction,
+        # via Unsloth's train_on_responses_only helper below.
         dataset_text_field="text",
     )
 
@@ -426,8 +403,20 @@ def train(
         tokenizer=tokenizer,
         args=cfg,
         train_dataset=ds,
-        data_collator=collator,
     )
+
+    # Mask loss to assistant tokens only via Unsloth's helper. This rewrites
+    # the trainer's internal collator to set labels=-100 on every token that
+    # isn't inside an assistant turn, using the ChatML role-marker strings
+    # passed below. Replaces the older ``DataCollatorForCompletionOnlyLM``
+    # path which broke under newer trl/unsloth combinations because of the
+    # removed top-level export and BPE-boundary fragility.
+    trainer = train_on_responses_only(
+        trainer,
+        instruction_part="<|im_start|>user\n",
+        response_part="<|im_start|>assistant\n",
+    )
+
     trainer.train()
     trainer.save_model(str(output_dir))
     print(f"[OK] SFT complete. Adapter saved to {output_dir}")

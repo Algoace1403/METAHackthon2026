@@ -17,12 +17,12 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.0.0", "pytest-cov>=4.0.0"]
 train = [
-    # trl 0.12+ removed top-level DataCollatorForCompletionOnlyLM and changed
-    # SFTTrainer's conversational-format auto-detection. Our train_sft.py is
-    # written against the 0.11.x API; pin upper-bound to keep the install
-    # reproducible on Colab without needing a manual --force-reinstall step.
-    "trl>=0.11.4,<0.12.0",
-    "transformers>=4.45.0,<5.0.0",
+    # We use Unsloth's train_on_responses_only helper for assistant-only loss
+    # masking, which works across modern trl versions. We let Unsloth control
+    # its trl/transformers/datasets transitive deps to avoid the resolver
+    # conflicts that trl pins used to cause on Colab.
+    "trl>=0.11.4",
+    "transformers>=4.45.0",
     "torch>=2.0.0",
     "accelerate>=0.30.0",
     "datasets>=2.0.0",
