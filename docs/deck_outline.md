@@ -82,10 +82,10 @@ Silent policy drift
 **Title:**
 Three baselines, one drift gap
 
-**ON SLIDE (3-bar chart of hard_drift only, then 4 bullets):**
-- *(Chart)* random 0.20 · no_op 0.16 · scripted 0.76 (n=20 seeds, hard_drift)
+**ON SLIDE (one chart + 4 bullets):**
+- *(Chart — drag `docs/img/baselines.png` straight into Keynote, fills the top 60% of the slide)*
 - Scripted on easy 1.00 → on hard_drift 0.76. Δ 0.24 is the **drift acceptance gap**
-- Five exploit patterns explicitly neutralised; all five score ≤ no_op
+- Five exploit patterns explicitly neutralised; all five score ≤ no_op (`docs/img/exploits.png` if you have a backup slide)
 - Demo video: scripted submits under stale policy and lands at 0.762
 
 **SPEAKER NOTES:**

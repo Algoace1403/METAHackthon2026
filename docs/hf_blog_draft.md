@@ -106,7 +106,9 @@ Five exploit patterns were specifically ruled out and tested — `ack_spammer`, 
 
 ## 5. Baselines and the drift acceptance gap
 
-Before any training, we measure three independent baselines on every task. The gap between the strongest baseline (tool-faithful scripted) on the no-drift task vs the drift task is the **drift acceptance gap** — it is the entire reason this environment is hard, and it is what future training will close.
+Before any training, we measure three independent baselines on every task. The gap between the strongest baseline (tool-faithful scripted) on the no-drift task vs the drift task is the **drift acceptance gap** — it is the entire reason this environment is hard, and it is the behavioural target the training pipeline is designed to close.
+
+![Three baselines (random / no_op / scripted) across the three task tiers, n=20 seeds each, with 0.24 drift acceptance gap on hard_drift annotated](baselines.png)
 
 | Task (n=20) | random | no_op | scripted |
 |---|---:|---:|---:|
@@ -114,11 +116,27 @@ Before any training, we measure three independent baselines on every task. The g
 | `medium_multi_payer` | 0.29 | 0.23 | **1.00** |
 | `hard_drift` | 0.20 | 0.16 | **0.76** |
 
-The 0.24 drop on `hard_drift` is not the model failing at coding — `coding_engine` is identical across tasks. It is the policy mutating mid-episode and the scripted baseline submitting against a stale mental model. The demo video shows the failure mode on seed 44: drift fires silently at step 23, the scripted policy never calls `insurance_lookup` again, submits every remaining claim under the now-stale `v1.3` rules, and lands at **0.762**. That 0.762 is *the cost of not recovering* — not a recovery story. The whole point of this environment is that closing this gap requires the agent to learn to re-query, which is exactly what RL training would teach.
+The 0.24 drop on `hard_drift` is not the model failing at coding — `coding_engine` is identical across tasks. It is the policy mutating mid-episode and the scripted baseline submitting against a stale mental model. The demo video shows the failure mode on seed 44: drift fires silently at step 23, the scripted policy never calls `insurance_lookup` again, submits every remaining claim under the now-stale `v1.3` rules, and lands at **0.762**. That 0.762 is *the cost of not recovering* — not a recovery story. The whole point of this environment is that closing this gap requires the agent to learn to re-query, which is the behavioural target a learned policy would need to close.
 
-**Reproducibility.** A separate 8-seed sweep on `hard_drift` (seeds {3, 7, 12, 17, 23, 44, 55, 91}) lands the scripted score in a tight band of **0.752–0.781**, mean 0.762. The drift step varies seed-to-seed across the full `range(10, 40)` candidate set; the score is stable because the loss mechanism (post-drift submission under stale policy) is deterministic.
+**Reproducibility.** Across 20 seeds on `hard_drift`, the scripted score lands in a tight band of **0.752–0.781**, mean 0.762, sd 0.011. The drift step varies seed-to-seed across the full `range(10, 40)` candidate set; the score is stable because the loss mechanism (post-drift submission under stale policy) is deterministic.
 
 A separation gate runs on every commit and asserts `scripted - no_op ≥ 0.5` on `easy_cashless` and `≥ 0.4` on `hard_drift`. Current margins: `+0.84` and `+0.60`.
+
+### 5.1 Reward is hard to game — the exploit gate
+
+A composable rubric is only as strong as its resistance to gaming. We wrote five attack policies — each one specifically targets a class of grader exploit — and ship them as a continuous-integration gate.
+
+![Exploit gate: scripted at 0.763 vs no_op at 0.159 vs five attack policies all clamped at or below 0.159 on hard_drift, n=20 seeds each](exploits.png)
+
+| Attack | Hypothesis it tests | Mean (n=20) | vs no_op |
+|---|---|---:|:--:|
+| `ack_spammer` | grader pays for ceremony / log volume | 0.129 | ≤ |
+| `escalate_everything` | calibrated abstention can be faked by always escalating | 0.159 | = |
+| `oscillator` | grader rewards "looking busy" via repeat writes | 0.094 | ≤ |
+| `double_count` | submit twice to inflate process_auditability | 0.159 | = |
+| `periodic_lookup` | spam `insurance_lookup` to fish for `drift_bonus` | 0.155 | ≤ |
+
+Every attack policy is clamped at or below the no_op floor (0.159). Scripted holds 0.763. Tolerance: 1e-3. Source: [`medibill/test_exploits.py`](https://github.com/Algoace1403/METAHackthon2026/blob/main/medibill/test_exploits.py).
 
 ## 6. Training pipeline (shipped, not measured today)
 
