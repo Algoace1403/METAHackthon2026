@@ -18,6 +18,8 @@ tags:
 > insurer's billing policy *silently changed mid-task* and re-query the rules
 > before submitting a claim against stale state.
 
+**📖 Full write-up:** [Teaching an LLM Agent That Its World Just Changed](https://gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37) — the blog post explains the regulatory clock, the silent-drift mechanic, the 0.25 drift acceptance gap, and why two of six rubric axes are RL-only by design.
+
 OpenEnv environment where an LLM agent closes cashless Indian health-insurance
 claims inside the IRDAI-mandated 3-hour clock while the insurer's policy
 rules drift silently mid-episode. The agent's only way to observe the
@@ -133,7 +135,8 @@ The narrated demo run lands at composite score **0.753** on seed 44: drift fires
 | Artefact | Path |
 |---|---|
 | Authoritative design spec (v3) | [`docs/round2-spec-v3.md`](docs/round2-spec-v3.md) |
-| HuggingFace blog draft | [`docs/hf_blog_draft.md`](docs/hf_blog_draft.md) |
+| HuggingFace blog draft (source) | [`docs/hf_blog_draft.md`](docs/hf_blog_draft.md) |
+| **Published blog post (live)** | [gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37](https://gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37) |
 | 6-slide pitch deck script | [`docs/pitch_v1.md`](docs/pitch_v1.md) |
 | Slide-by-slide paste-ready outline | [`docs/deck_outline.md`](docs/deck_outline.md) |
 | Demo video recording script | [`docs/video_recording_script.md`](docs/video_recording_script.md) |

@@ -15,8 +15,8 @@ OpenEnv where an LLM agent closes cashless Indian health-insurance claims under 
 Three baselines on hard_drift (20-seed means): random 0.11 · no_op 0.08 · scripted 0.75. Same scripted policy on no-drift easy task: 1.00. The 0.25 drift-acceptance gap is the behavioral target.
 
 Repo: https://github.com/Algoace1403/METAHackthon2026
-Video: [PASTE VIDEO LINK]
-HF Space: [PASTE HF SPACE URL or remove this line if not pushed]
+HF Space: https://huggingface.co/spaces/Anuj424614/medibill-env
+Blog: https://gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37
 Spec: docs/round2-spec-v3.md
 
 Sub-prize fit (Theme 3.1): Scaler AI Labs — enterprise reasoning under business rules and regulatory constraints.
@@ -45,10 +45,9 @@ Solo: Anuj Kumar Soni
 **Legal.** All synthetic data. No AMA CPT, no SNOMED CT, no MIMIC-IV. ICD-10-CM (CMS public domain) for diagnoses; SYNTH-PROC-v1 (project ontology, MIT) for procedures; CGHS for INR pricing.
 
 Repo: https://github.com/Algoace1403/METAHackthon2026
-Video: [PASTE VIDEO LINK]
-HF Space: [PASTE HF SPACE URL or remove this line if not pushed]
+HF Space: https://huggingface.co/spaces/Anuj424614/medibill-env
+Blog: https://gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37
 Spec: docs/round2-spec-v3.md
-Blog: docs/hf_blog_draft.md
 
 Sub-prize fit (Theme 3.1): Scaler AI Labs — enterprise reasoning under business rules and regulatory constraints.
 ```
@@ -57,11 +56,10 @@ Sub-prize fit (Theme 3.1): Scaler AI Labs — enterprise reasoning under busines
 
 ## Pre-paste checklist
 
-1. **Replace `[PASTE VIDEO LINK]`** with the public URL of the recorded demo (HF Spaces, YouTube unlisted, Google Drive share-link, whichever you used).
-2. **Replace `[PASTE HF SPACE URL or remove this line if not pushed]`**: either paste `https://huggingface.co/spaces/<your-username>/medibill-env`, or delete that whole line. Do not leave the bracket text visible.
-3. **Confirm the repo is public** — open `https://github.com/Algoace1403/METAHackthon2026` in an incognito window before posting.
-4. **Confirm the video plays** in an incognito window before posting (no Drive permission walls).
-5. **Pick A or B based on the channel rules.** If unsure, A.
+1. **Confirm the repo is public** — open `https://github.com/Algoace1403/METAHackthon2026` in an incognito window before posting.
+2. **Confirm the HF Space loads** — open `https://huggingface.co/spaces/Anuj424614/medibill-env` in an incognito window. Status should be green ("Running").
+3. **Confirm the blog renders** — open `https://gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37` in an incognito window. Charts should render inline.
+4. **Pick A or B based on the channel rules.** If unsure, A.
 
 ## Do not include
 
