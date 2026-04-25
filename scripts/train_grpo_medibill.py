@@ -386,19 +386,19 @@ def main() -> None:
     task_filter = None if args.task_filter == "all" else args.task_filter
 
     # ---- model: load SFT adapter, then RE-ATTACH LoRA for training ----
-    print("[grpo] Loading model and tokenizer (Unsloth + 4-bit, bf16)...")
+    print("[grpo] Loading model and tokenizer (Unsloth + 4-bit, fp16)...")
     import torch  # noqa: WPS433
     from unsloth import FastLanguageModel  # noqa: WPS433
-    # Explicit bfloat16 dtype — fixes "self and mat2 must have the same dtype,
-    # got Half and Float" crash in Unsloth's apply_lora_mlp_swiglu kernel.
-    # When dtype=None, Unsloth defaults to fp16 on Colab and the new LoRA
-    # params from get_peft_model land in fp32, producing a Half/Float mix
-    # the fast_lora kernel rejects. bf16 keeps everything in one precision
-    # that the kernel accepts.
+    # Explicit float16 dtype — Unsloth issue #4891 reports "self and mat2 must
+    # have the same dtype, got Half and Float" when 4-bit dequant produces
+    # fp16 tensors but LoRA params land in fp32. bf16 also fails because the
+    # 4-bit dequant path is hardcoded to fp16 in the fast_lora kernel.
+    # Unsloth's official RL guide explicitly recommends fp16 over bf16 for
+    # RL: https://unsloth.ai/docs/.../fp16-vs-bf16-for-rl
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=str(args.sft_adapter),
         max_seq_length=2048,
-        dtype=torch.bfloat16,
+        dtype=torch.float16,
         load_in_4bit=True,
     )
 
@@ -451,7 +451,8 @@ def main() -> None:
         logging_steps=1,
         save_steps=max(args.max_steps // 3, 5),
         save_total_limit=3,
-        bf16=True,
+        # fp16 not bf16 — see dtype rationale at model load above.
+        fp16=True,
         # NOTE: gradient_checkpointing intentionally OMITTED (review finding
         # #2). Unsloth manages it via use_gradient_checkpointing="unsloth"
         # in get_peft_model above. Setting it here causes a double-wrap
