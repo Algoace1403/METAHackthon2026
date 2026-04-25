@@ -7,9 +7,9 @@
 ## TL;DR
 
 - **Problem.** Indian IRDAI regulation gives hospitals 1 hour for pre-auth and 3 hours for final discharge on every cashless insurance claim. Insurance policies get updated silently between shifts — rule changes, renamed codes, new signature requirements. A human coder who misses the update submits under stale rules and the claim is disallowed. FY24: ₹26,000 crore disallowed (+19% YoY).
-- **Environment.** An OpenEnv where an LLM plays the medical coder under that clock. 3 tools, 3 task tiers, 6-axis deterministic grader with formally-disjoint field partition enforced by an import-time assertion.
+- **Environment.** An OpenEnv where an LLM plays the medical coder under that clock. 5 tools, 3 task tiers, 6-axis deterministic grader with formally-disjoint field partition enforced by an import-time assertion.
 - **Hero mechanic.** On hard tasks the active policy mutates mid-episode without announcement. The agent's only path to the new rules is a fresh `insurance_lookup` call. `submit_claim` is graded against the policy active **at submit time**, not against the policy the agent believes.
-- **Baselines wired and measured.** Three independent baselines on the hardest task `hard_drift` (20-seed means): random `0.20`, no-op `0.16`, tool-faithful scripted `0.76`. The same scripted policy hits `1.00` on `easy_cashless` — that **0.24 drift acceptance gap** is the headline measurable signal. Full per-seed data: `docs/baseline_reproducibility.csv`.
+- **Baselines wired and measured.** Three independent baselines on the hardest task `hard_drift` (20-seed means): random `0.11`, no-op `0.08`, tool-faithful scripted `0.75`. The same scripted policy hits `1.00` on `easy_cashless` — that **0.25 drift acceptance gap** is the headline measurable signal. Full per-seed data: `docs/baseline_reproducibility.csv`.
 - **Five exploits explicitly neutralised.** `ack_spammer`, `escalate_everything`, `oscillator`, `double_count`, `periodic_lookup` — all five score ≤ no-op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance. Test gate runs on every commit.
 - **Training pipeline.** Qwen2.5-3B-Instruct + LoRA SFT on 3,632 chat examples filtered from 48 scripted trajectories is shipped, runnable on a free-tier Colab T4 (capability-conditional bf16/fp16, `DataCollatorForCompletionOnlyLM`, prompt-version SHA guard). We did not run it inside the hackathon compute window, so we do not report SFT numbers here.
 - **Repo:** `https://github.com/Algoace1403/METAHackthon2026`
@@ -108,17 +108,17 @@ Five exploit patterns were specifically ruled out and tested — `ack_spammer`, 
 
 Before any training, we measure three independent baselines on every task. The gap between the strongest baseline (tool-faithful scripted) on the no-drift task vs the drift task is the **drift acceptance gap** — it is the entire reason this environment is hard, and it is the behavioural target the training pipeline is designed to close.
 
-![Three baselines (random / no_op / scripted) across the three task tiers, n=20 seeds each, with 0.24 drift acceptance gap on hard_drift annotated](baselines.png)
+![Three baselines (random / no_op / scripted) across the three task tiers, n=20 seeds each, with 0.25 drift acceptance gap on hard_drift annotated](baselines.png)
 
 | Task (n=20) | random | no_op | scripted |
 |---|---:|---:|---:|
-| `easy_cashless` | 0.44 | 0.47 | **1.00** |
-| `medium_multi_payer` | 0.29 | 0.23 | **1.00** |
-| `hard_drift` | 0.20 | 0.16 | **0.76** |
+| `easy_cashless` | 0.36 | 0.39 | **1.00** |
+| `medium_multi_payer` | 0.21 | 0.15 | **1.00** |
+| `hard_drift` | 0.11 | 0.08 | **0.75** |
 
-The 0.24 drop on `hard_drift` is not the model failing at coding — `coding_engine` is identical across tasks. It is the policy mutating mid-episode and the scripted baseline submitting against a stale mental model. The demo video shows the failure mode on seed 44: drift fires silently at step 23, the scripted policy never calls `insurance_lookup` again, submits every remaining claim under the now-stale `v1.3` rules, and lands at **0.762**. That 0.762 is *the cost of not recovering* — not a recovery story. The whole point of this environment is that closing this gap requires the agent to learn to re-query, which is the behavioural target a learned policy would need to close.
+The 0.25 drop on `hard_drift` is not the model failing at coding — `coding_engine` is identical across tasks. It is the policy mutating mid-episode and the scripted baseline submitting against a stale mental model. The demo video shows the failure mode on seed 44: drift fires silently at step 23, the scripted policy never calls `insurance_lookup` again, submits every remaining claim under the now-stale `v1.3` rules, and lands at **0.753** (20-seed mean is 0.754). That 0.753 is *the cost of not recovering* — not a recovery story. The whole point of this environment is that closing this gap requires the agent to learn to re-query, which is the behavioural target a learned policy would need to close.
 
-**Reproducibility.** Across 20 seeds on `hard_drift`, the scripted score lands in a tight band of **0.752–0.781**, mean 0.762, sd 0.011. The drift step varies seed-to-seed across the full `range(10, 40)` candidate set; the score is stable because the loss mechanism (post-drift submission under stale policy) is deterministic.
+**Reproducibility.** Across 20 seeds on `hard_drift`, the scripted score lands in a tight band of **0.748–0.765**, mean 0.754, sd 0.011. The drift step varies seed-to-seed across the full `range(10, 40)` candidate set; the score is stable because the loss mechanism (post-drift submission under stale policy) is deterministic.
 
 A separation gate runs on every commit and asserts `scripted - no_op ≥ 0.5` on `easy_cashless` and `≥ 0.4` on `hard_drift`. Current margins: `+0.84` and `+0.60`.
 
@@ -126,17 +126,17 @@ A separation gate runs on every commit and asserts `scripted - no_op ≥ 0.5` on
 
 A composable rubric is only as strong as its resistance to gaming. We wrote five attack policies — each one specifically targets a class of grader exploit — and ship them as a continuous-integration gate.
 
-![Exploit gate: scripted at 0.763 vs no_op at 0.159 vs five attack policies all clamped at or below 0.159 on hard_drift, n=20 seeds each](exploits.png)
+![Exploit gate: scripted at 0.754 vs no_op at 0.079 vs five attack policies all clamped at or below 0.079 on hard_drift, n=20 seeds each](exploits.png)
 
 | Attack | Hypothesis it tests | Mean (n=20) | vs no_op |
 |---|---|---:|:--:|
 | `ack_spammer` | grader pays for ceremony / log volume | 0.129 | ≤ |
-| `escalate_everything` | calibrated abstention can be faked by always escalating | 0.159 | = |
+| `escalate_everything` | calibrated abstention can be faked by always escalating | 0.079 | = |
 | `oscillator` | grader rewards "looking busy" via repeat writes | 0.094 | ≤ |
-| `double_count` | submit twice to inflate process_auditability | 0.159 | = |
+| `double_count` | submit twice to inflate process_auditability | 0.079 | = |
 | `periodic_lookup` | spam `insurance_lookup` to fish for `drift_bonus` | 0.155 | ≤ |
 
-Every attack policy is clamped at or below the no_op floor (0.159). Scripted holds 0.763. Tolerance: 1e-3. Source: [`medibill/test_exploits.py`](https://github.com/Algoace1403/METAHackthon2026/blob/main/medibill/test_exploits.py).
+Every attack policy is clamped at or below the no_op floor (0.079). Scripted holds 0.754. Tolerance: 1e-3. Source: [`medibill/test_exploits.py`](https://github.com/Algoace1403/METAHackthon2026/blob/main/medibill/test_exploits.py).
 
 ## 6. Training pipeline (shipped, not measured today)
 

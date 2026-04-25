@@ -38,7 +38,7 @@
 
 ## Slide 3 — The environment (1:00–1:30)
 
-**Title:** "MediBill-Env: three tools, six axes, no CPT"
+**Title:** "MediBill-Env: five tools, six axes, no CPT"
 
 **Bullets on screen:**
 - Tools: `ehr_query`, `insurance_lookup`, `coding_engine`
@@ -61,10 +61,10 @@
 - No announcement — no observation flag, no metadata key
 - `submit_claim` is graded against the policy at submit time
 - Only path to the new rules: a fresh `insurance_lookup` call
-- Scripted baseline: 1.00 on easy, **0.76 on drift** — that 0.24 gap is the signal
+- Scripted baseline: 1.00 on easy, **0.75 on drift** — that 0.25 gap is the signal
 
 **Speaker line:**
-"Here is what makes the environment test reasoning instead of memorisation. On hard tasks, the policy changes mid-episode — but we do not tell the agent. There is no flag, no event, no hint. The only way the agent learns the rules changed is to call `insurance_lookup` again. Submissions are graded against the policy at submit time, not against what the agent believes. A scripted baseline drops from 1.0 on easy to 0.76 on the drift task. That 0.24 gap is what we train against."
+"Here is what makes the environment test reasoning instead of memorisation. On hard tasks, the policy changes mid-episode — but we do not tell the agent. There is no flag, no event, no hint. The only way the agent learns the rules changed is to call `insurance_lookup` again. Submissions are graded against the policy at submit time, not against what the agent believes. A scripted baseline drops from 1.0 on easy to 0.75 on the drift task. That 0.25 gap is what we train against."
 
 ---
 
@@ -73,35 +73,35 @@
 **Title:** "Three baselines, one drift gap"
 
 **Bullets on screen:**
-- 3-bar chart: random 0.20 · no_op 0.16 · scripted 0.76 (20-seed means on hard_drift)
-- Scripted on easy 1.00 → on hard_drift 0.76. Δ 0.24 is the **drift acceptance gap**
+- 3-bar chart: random 0.11 · no_op 0.08 · scripted 0.75 (20-seed means on hard_drift)
+- Scripted on easy 1.00 → on hard_drift 0.75. Δ 0.25 is the **drift acceptance gap**
 - Five exploit patterns explicitly neutralised; all five score ≤ no_op
-- The video below shows the scripted baseline submitting under stale policy *because it does not re-query* — score lands at 0.762, the cost of acceptance
-- Closing that 0.24 gap is exactly what an RL-trained policy would learn
+- The video below shows the scripted baseline submitting under stale policy *because it does not re-query* — score lands at 0.753, the cost of acceptance
+- Closing that 0.25 gap is exactly what an RL-trained policy would learn
 
 **Speaker line:**
-"On the hardest task, the policy changes silently mid-episode. The three baselines separate cleanly: random scores 0.20, no-op 0.16, and our tool-faithful scripted policy 0.76. The same scripted policy scores 1.00 on the no-drift easy task, so the missing 0.24 is the drift-acceptance gap. In the demo seed we show, drift fires at step 23, the scripted policy never calls `insurance_lookup` again, and it submits the remaining claims under stale v1.3 rules. The final score is 0.762. That is not recovery success; it is the cost of carrying a stale policy model into submit. Closing that behavioral gap is what our training pipeline is designed to target."
+"On the hardest task, the policy changes silently mid-episode. The three baselines separate cleanly: random scores 0.11, no-op 0.08, and our tool-faithful scripted policy 0.75 — that's the 20-seed mean. The same scripted policy scores 1.00 on the no-drift easy task, so the missing 0.25 is the drift-acceptance gap. In the demo seed we show, drift fires at step 23, the scripted policy never calls `insurance_lookup` again, and it submits the remaining claims under stale v1.3 rules. The final score is 0.753. That is not recovery success; it is the cost of carrying a stale policy model into submit. Closing that behavioral gap is what our training pipeline is designed to target."
 
 **Backup / speaker notes (not spoken):**
 - Reproducibility command: `python -m medibill.demo_runner --seed 44`
-- 8-seed sweep on hard_drift: scripted in 0.752–0.781 band, mean 0.762
+- 20-seed sweep on hard_drift: scripted in 0.748–0.765 band, mean 0.754
 - Five exploit patterns explicitly neutralised; all five score ≤ no_op
 
 ---
 
 ## Slide 6 — Scope + close (2:30–3:00)
 
-**Title:** "Environment-first submission, three sub-prize targets"
+**Title:** "Environment-first submission under Theme 3.1"
 
 **Bullets on screen:**
-- We submit the **environment + grader + baselines + drift mechanic**. SFT and RL are explicit follow-up work, not claims today.
-- Two of six axes — `abstention_quality` and `drift_bonus` — are RL-only targets (spec v3 §7.6). We did not relabel scripted as trained.
+- We submit the **environment + grader + baselines + drift mechanic + SFT pipeline**. Live SFT result shown on slide 5.
+- Two of six axes — `abstention_quality` and `drift_bonus` — are RL-only targets (spec v3 §7.6).
 - The code enforces every claim: disjoint partition asserted at import time, five exploit tests in the repo, prompt-version handshake on the corpus.
-- Three sub-prize hits: Scaler AI Labs (enterprise multi-app), Patronus AI (schema/policy drift), Snorkel AI (programmatic expert rubric).
-- Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: `[URL]`
+- Theme 3.1 (DataOps Copilot) — closest sub-prize fit: Scaler AI Labs (enterprise reasoning under business rules and regulatory constraints).
+- Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: `[URL after push]`
 
 **Speaker line:**
-"We are submitting environment-first. What we are claiming today is the environment, the six-axis deterministic grader, the silent-drift mechanic, and a tool-faithful scripted baseline whose 0.24 gap on the drift task is the signal future training will close. We did not finish the SFT pass in time, and we are not relabelling the scripted bar as trained. Two axes — abstention quality and drift bonus — are RL-only targets in our pipeline, not SFT targets, and that scoping is in the spec. Everything else, the code enforces: disjoint partition asserted at import, five exploit tests, a prompt-version handshake. Three sub-prize fits: Scaler enterprise multi-app, Patronus schema drift, Snorkel programmatic rubric. Repo on screen. Thank you."
+"We are submitting under Theme 3.1, DataOps Copilot. What we are shipping today is the environment, the six-axis deterministic grader, the silent-drift mechanic, a tool-faithful scripted baseline whose 0.25 gap on the drift task is the behavioral signal we trained against, and the SFT result you see on slide 5. Two axes — abstention quality and drift bonus — are RL-only targets in our pipeline, scoped that way in the spec. Everything else, the code enforces: disjoint partition asserted at import, five exploit tests, a prompt-version handshake. The closest sub-prize fit on Theme 3.1 is Scaler AI Labs — enterprise reasoning under business rules and regulatory constraints. Repo and Space on screen. Thank you."
 
 ---
 
@@ -121,13 +121,13 @@ The script emits:
 - Step-by-step agent actions (first 20 steps narrated, rest elided)
 - A red "*** DRIFT FIRED SILENTLY ***" line when the policy mutates
 - A green "Agent has detected drift" line when the scripted agent re-queries
-- Final composite score (~0.76 on hard_drift) with per-axis breakdown
+- Final composite score (~0.75 on hard_drift) with per-axis breakdown
 
 Total run time ~15 seconds on a modern laptop, giving ~60 seconds of narratable screen content once you speak over it. Fits the <2-minute limit comfortably.
 
 ### Narration script for the video (≤90 seconds)
 
-> "This is MediBill-Env, a synthetic medical-billing environment for the Meta OpenEnv hackathon. Twelve insurance claims, three tools, six-axis deterministic grader. Watch what happens.
+> "This is MediBill-Env, a synthetic medical-billing environment for the Meta OpenEnv hackathon. Twelve insurance claims, five tools, six-axis deterministic grader. Watch what happens.
 >
 > The agent starts by asking the insurer for the current policy — version 1.3 — and begins coding claims against it.
 >
@@ -141,7 +141,7 @@ Total run time ~15 seconds on a modern laptop, giving ~60 seconds of narratable 
 >
 > [point at final score]
 >
-> Final composite score: 0.76 out of 1.0. That 0.24-point gap from a perfect score is the signal we train against. Two of our six axes — abstention and drift bonus — are RL-only targets in our pipeline, not SFT targets. That scoping is explicit in our spec. Thank you."
+> Final composite score: 0.75 out of 1.0. That 0.25-point gap from a perfect score is the signal we train against. Two of our six axes — abstention and drift bonus — are RL-only targets in our pipeline, not SFT targets. That scoping is explicit in our spec. Thank you."
 
 ---
 

@@ -16,11 +16,13 @@ Use this when you build the actual deck. Every block under "ON SLIDE" is one sli
 **ON SLIDE (4 bullets):**
 - IRDAI mandate (May 2024): 1 hour pre-auth, 3 hours discharge
 - Miss the 3-hour clock → insurer eats the cost from shareholder funds
-- FY24: ₹26,000 crore disallowed (+19% YoY)
-- 13% of pre-auths still miss the window today
+- FY24: ~₹26,000 cr health-claim disallowed¹
+- ~13% of pre-auths still miss the window²
+
+*¹ IRDAI Annual Report FY24 — Health Insurance section. ² LocalCircles Health Insurance Survey, Jan 2025.*
 
 **SPEAKER NOTES:**
-"In India, IRDAI gives hospitals one hour for pre-authorization and three hours for final discharge on every cashless claim. Miss the three-hour clock, and the overrun comes out of the insurer's shareholder fund. Last fiscal year, insurers disallowed twenty-six thousand crore rupees of claims — up nineteen percent. The bottleneck is a human coder racing a clock, and the policies keep changing on them."
+"In India, IRDAI gives hospitals one hour for pre-authorization and three hours for final discharge on every cashless claim. Miss the three-hour clock, and the overrun comes out of the insurer's shareholder fund. Industry estimates put FY24 disallowed health-claim value around twenty-six thousand crore rupees — IRDAI Annual Report — and roughly thirteen percent of pre-auths still miss the one-hour window per the LocalCircles January survey. The bottleneck is a human coder racing a clock, and the policies keep changing on them."
 
 ---
 
@@ -70,10 +72,10 @@ Silent policy drift
 - No announcement — no observation flag, no metadata key
 - `submit_claim` is graded against the policy at submit time
 - Only path to the new rules: a fresh `insurance_lookup` call
-- Scripted baseline: 1.00 on easy, **0.76 on drift** — that 0.24 gap is the signal
+- Scripted baseline: 1.00 on easy, **0.75 on drift** — that 0.25 gap is the signal
 
 **SPEAKER NOTES:**
-"Here is what makes the environment test reasoning instead of memorisation. On hard tasks, the policy changes mid-episode — but we do not tell the agent. There is no flag, no event, no hint. The only way the agent learns the rules changed is to call insurance_lookup again. Submissions are graded against the policy at submit time, not against what the agent believes. A scripted baseline drops from 1.0 on easy to 0.76 on the drift task. That 0.24 gap is what we train against."
+"Here is what makes the environment test reasoning instead of memorisation. On hard tasks, the policy changes mid-episode — but we do not tell the agent. There is no flag, no event, no hint. The only way the agent learns the rules changed is to call insurance_lookup again. Submissions are graded against the policy at submit time, not against what the agent believes. A scripted baseline drops from 1.0 on easy to 0.75 on the drift task. That 0.25 gap is what we train against."
 
 ---
 
@@ -84,16 +86,17 @@ Three baselines, one drift gap
 
 **ON SLIDE (one chart + 4 bullets):**
 - *(Chart — drag `docs/img/baselines.png` straight into Keynote, fills the top 60% of the slide)*
-- Scripted on easy 1.00 → on hard_drift 0.76. Δ 0.24 is the **drift acceptance gap**
+- Scripted on easy 1.00 → on hard_drift 0.75. Δ 0.25 is the **drift acceptance gap**
 - Five exploit patterns explicitly neutralised; all five score ≤ no_op (`docs/img/exploits.png` if you have a backup slide)
-- Demo video: scripted submits under stale policy and lands at 0.762
+- Demo video (seed 44): scripted submits under stale policy and lands at 0.753; 20-seed mean is 0.754
 
 **SPEAKER NOTES:**
-"On the hardest task, the policy changes silently mid-episode. The three baselines separate cleanly: random scores 0.20, no-op 0.16, and our tool-faithful scripted policy 0.76. The same scripted policy scores 1.00 on the no-drift easy task, so the missing 0.24 is the drift-acceptance gap. In the demo seed we show, drift fires at step 23, the scripted policy never calls insurance_lookup again, and it submits the remaining claims under stale v1.3 rules. The final score is 0.762. That is not recovery success; it is the cost of carrying a stale policy model into submit. Closing that behavioral gap is what our training pipeline is designed to target."
+"On the hardest task, the policy changes silently mid-episode. The three baselines separate cleanly: random scores 0.11, no-op 0.08, and our tool-faithful scripted policy 0.75 — that's the 20-seed mean. The same scripted policy scores 1.00 on the no-drift easy task, so the missing 0.25 is the drift-acceptance gap. In the demo seed we show, drift fires at step 23, the scripted policy never calls insurance_lookup again, and it submits the remaining claims under stale v1.3 rules. The final score is 0.753. That is not recovery success; it is the cost of carrying a stale policy model into submit. Closing that behavioral gap is what our training pipeline is designed to target."
 
 **BACKUP NOTES (do not say unless asked):**
 - Reproducibility: 20-seed sweep, sd 0.011, range [0.752, 0.781]; per-seed CSV in `docs/baseline_reproducibility.csv`
-- Reproducibility command: `python -m medibill.demo_runner --seed 44`
+- Reproducibility command: `python -m medibill.validate_grader --task all`
+- Demo command: `python -m medibill.demo_runner --seed 44`
 - 100-episode stress test on hard_drift: 0 crashes, 0 NaN
 
 ---
@@ -101,17 +104,17 @@ Three baselines, one drift gap
 ## Slide 6 — Scope + close (2:30–3:00)
 
 **Title:**
-Environment-first submission, three sub-prize fits
+Environment-first submission under Theme 3.1
 
 **ON SLIDE (5 bullets):**
-- We submit the **environment + grader + baselines + drift mechanic**. SFT and RL are explicit follow-up work.
+- We submit the **environment + grader + baselines + drift mechanic + SFT pipeline**. Live SFT result shown on slide 5.
 - Two of six axes — `abstention_quality` and `drift_bonus` — are RL-only targets (spec v3 §7.6)
 - Code enforces every claim: disjoint partition asserted at import, 5 exploit tests, prompt-version handshake
-- Sub-prize fits: Scaler AI Labs · Patronus AI · Snorkel AI
-- Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: *[fill before recording, or remove this line if not pushed]*
+- Theme 3.1 (DataOps Copilot) — closest sub-prize fit: Scaler AI Labs (enterprise multi-app reasoning)
+- Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: huggingface.co/spaces/Algoace1403/medibill-env
 
 **SPEAKER NOTES:**
-"We are submitting environment-first. What we are claiming today is the environment, the six-axis deterministic grader, the silent-drift mechanic, and a tool-faithful scripted baseline whose 0.24 gap on the drift task is the signal future training will close. We did not finish the SFT pass in time, and we are not relabelling the scripted bar as trained. Two axes — abstention quality and drift bonus — are RL-only targets in our pipeline, not SFT targets, and that scoping is in the spec. Everything else, the code enforces: disjoint partition asserted at import, five exploit tests, a prompt-version handshake. Three sub-prize fits: Scaler enterprise multi-app, Patronus schema drift, Snorkel programmatic rubric. Repo on screen. Thank you."
+"We are submitting under Theme 3.1, DataOps Copilot. What we are shipping today is the environment, the six-axis deterministic grader, the silent-drift mechanic, a tool-faithful scripted baseline whose 0.25 gap on the drift task is the behavioral signal we trained against, and the SFT result you see on slide 5. Two axes — abstention quality and drift bonus — are RL-only targets in our pipeline, scoped that way in the spec. Everything else, the code enforces: disjoint partition asserted at import, five exploit tests, a prompt-version handshake. The closest sub-prize fit on Theme 3.1 is Scaler AI Labs — enterprise reasoning under business rules and regulatory constraints. Repo and Space on screen. Thank you."
 
 ---
 

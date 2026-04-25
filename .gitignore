@@ -8,3 +8,4 @@ traces/train_no_op.jsonl
 datasets/sft_smoke.jsonl
 adapters/
 runs/
+openenv_medibill_env.egg-info/

@@ -90,8 +90,8 @@ def plot_loss(losses: list[float], out_path: Path) -> None:
 # ---------------- Eval table ----------------
 
 EVAL_RE = re.compile(
-    r"^(?P<task>easy_cashless|medium_multi_payer|hard_drift)\s+"
-    r"n=(?P<n>\d+)\s+sft_adapter=(?P<sft>[0-9.]+)\s+"
+    r"^\s*(?P<task>easy_cashless|medium_multi_payer|hard_drift)\s+"
+    r"n=(?P<n>\d+)\s+trained=(?P<sft>[0-9.]+)\s+"
     r"scripted=(?P<scripted>[0-9.]+)",
     re.MULTILINE,
 )
@@ -114,8 +114,10 @@ def plot_4bar(eval_table: dict[str, dict[str, float]], out_path: Path) -> None:
         print("[skip] 4-bar — no hard_drift row found in eval table")
         return
     sft = eval_table["hard_drift"]["sft_adapter"]
-    # Hard-locked 20-seed measured baselines (see docs/baseline_reproducibility.csv)
-    baselines = {"random": 0.195, "no_op": 0.159, "scripted": 0.763}
+    # Hard-locked 20-seed measured baselines on hard_drift after grader v3.1
+    # (P6 oscillation penalty + B2/B3 bonus gating). See
+    # docs/baseline_reproducibility.csv.
+    baselines = {"random": 0.108, "no_op": 0.079, "scripted": 0.754}
     names = ["random", "no_op", "scripted", "sft_adapter"]
     means = [baselines["random"], baselines["no_op"], baselines["scripted"], sft]
     colors = ["#888888", "#bbbb44", "#2a7fbf", "#cc3399"]

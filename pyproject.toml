@@ -16,13 +16,26 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0.0", "pytest-cov>=4.0.0"]
-train = ["trl>=0.16.0", "transformers>=5.2.0", "torch>=2.0.0", "accelerate>=0.30.0", "datasets>=2.0.0"]
+train = [
+    # trl 0.12+ removed top-level DataCollatorForCompletionOnlyLM and changed
+    # SFTTrainer's conversational-format auto-detection. Our train_sft.py is
+    # written against the 0.11.x API; pin upper-bound to keep the install
+    # reproducible on Colab without needing a manual --force-reinstall step.
+    "trl>=0.11.4,<0.12.0",
+    "transformers>=4.45.0,<5.0.0",
+    "torch>=2.0.0",
+    "accelerate>=0.30.0",
+    "datasets>=2.0.0",
+]
+# Pulls in the OpenAI Python client so `python inference.py` runs out of the
+# box on a fresh checkout. Server image (Dockerfile) deliberately omits this
+# to keep the deployed surface minimal.
+inference = ["openai>=1.0.0"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-# Load the openenv mock as an early plugin before package imports (Round 1 pattern)
-addopts = "-p _mock_openenv"
-pythonpath = ["tests"]
+# Tests live alongside the package (e.g. medibill/test_exploits.py).
+testpaths = ["medibill"]
+python_files = ["test_*.py"]
 
 [project.scripts]
 # OpenEnv CLI's validator expects this entry point to be named exactly "server".

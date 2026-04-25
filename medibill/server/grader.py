@@ -39,6 +39,12 @@ assert abs(sum(WEIGHTS.values()) - 1.0) < 1e-9, "WEIGHTS must sum to 1.0"
 # Gate thresholds
 MIN_FINAL_FOR_EFFICIENCY         = 0.10
 MIN_FINAL_FOR_BONUSES            = 0.70
+# Structural bonuses (B2 all_identity_80pct, B3 cross_claim_consistency)
+# require BOTH the identity-floor (final_correctness) AND demonstrated policy
+# work — otherwise a no_op agent that submits the dirty state verbatim earns
+# both bonuses for free on tasks where ground-truth identity is preserved in
+# the dirty state. See spec v3 §6 score-separation gate.
+MIN_POLICY_FOR_STRUCTURAL_BONUSES = 0.50
 DRIFT_BONUS_MIN_FINAL_PLUS_POL   = 0.80  # final_correctness + policy_compliance
 
 # Penalty magnitudes
@@ -47,6 +53,7 @@ PENALTY_WRONG_FIX_AMBIGUOUS      = 0.08
 PENALTY_ESCALATE_CLEARCUT        = 0.03   # per escalation, uncapped
 PENALTY_REPEATED_TOOL            = 0.05   # per repeat beyond 2nd identical
 PENALTY_SUBMIT_NO_CODING         = 0.05   # per submit w/o any coding_engine on that claim
+PENALTY_OSCILLATION              = 0.03   # per (claim,field) with 3+ distinct coding_engine values
 PENALTY_CAP                      = 0.50
 
 # Bonus magnitudes
@@ -190,13 +197,15 @@ class MediBillGrader:
             per_claim=per_claim,
         )
 
-        # --- bonuses (gated on final_correctness >= 0.70) ---
+        # --- bonuses (B1 gated on final >= 0.70; structural B2/B3 also need
+        # policy_compliance >= 0.50 to lock out no-effort agents) ---
         bons, bon_breakdown = _compute_bonuses(
             tool_log=tool_log,
             by_entity=by_entity,
             per_claim=per_claim,
             ambiguous_set=ambiguous_set,
             final_correctness=final_raw,
+            policy_compliance=pol_raw,
         )
 
         composite = base - pens + bons
@@ -425,10 +434,17 @@ def _axis_drift_bonus(
     submitted_ids: set[str],
     per_claim: list[dict[str, Any]],
 ) -> float:
-    """For each submitted claim, check: was there a fresh insurance_lookup
-    between the most-recent-drift-before-submit and the submit? If so, +1,
-    else 0. Average over submitted claims. 1.0 if no drift events at all
-    (the mechanic doesn't apply to drift-free tasks)."""
+    """For each post-drift submitted claim, check: was there a fresh
+    insurance_lookup between the most-recent-drift-before-submit and the
+    submit? If so, +1, else 0. Average over POST-DRIFT submitted claims.
+
+    Pre-drift submissions are excluded from the average (the metric
+    doesn't apply — there is no stale policy yet to detect). An agent
+    that races to submit every claim BEFORE drift fires therefore lands
+    on an empty score list and earns 0.0 — racing is not free.
+
+    Returns 1.0 if the task has no drift events at all (the mechanic
+    doesn't apply to drift-free tasks)."""
     if not drift_events:
         return 1.0
     drift_steps = sorted(e["step"] for e in drift_events)
@@ -442,9 +458,10 @@ def _axis_drift_bonus(
             continue
         prior_drifts = [s for s in drift_steps if s <= submit_step]
         if not prior_drifts:
-            # No drift has happened before this submission — bonus N/A per claim.
-            # Treat as 1.0 (not a failure; drift hadn't landed yet).
-            scores.append(1.0)
+            # Submitted before any drift fired — bonus is N/A for this
+            # claim and it does NOT contribute to the average. Closes the
+            # race-to-submit-before-drift exploit (would otherwise earn
+            # full drift_bonus credit by avoiding the test).
             continue
         last_drift_step = prior_drifts[-1]
         # Did a successful insurance_lookup happen in (last_drift_step, submit_step]?
@@ -455,6 +472,7 @@ def _axis_drift_bonus(
             for r in tool_log
         )
         scores.append(1.0 if fresh else 0.0)
+    # No post-drift claims at all → 0.0 (agent never engaged the mechanic).
     return sum(scores) / len(scores) if scores else 0.0
 
 
@@ -535,6 +553,25 @@ def _compute_penalties(
         if not had_coding:
             breakdown[f"submit_without_coding::{cid}"] = PENALTY_SUBMIT_NO_CODING
 
+    # P6. Oscillation: 3+ successful coding_engine writes to the same
+    # (claim_id, field). Closes the oscillator exploit (writing alternating
+    # values to a single cell to rack up process credit without committing to
+    # a real fix). One legitimate mistake-then-correction (2 writes) is free;
+    # the third write incurs the penalty, and each further write adds another.
+    coding_write_counts: dict[tuple[str, str], int] = {}
+    for rec in _iter_tool_log(tool_log, "coding_engine", status="success"):
+        params = rec.get("_params_cache") or {}
+        cid = params.get("claim_id", "")
+        fld = params.get("field", "")
+        if not cid or not fld:
+            continue
+        coding_write_counts[(cid, fld)] = coding_write_counts.get((cid, fld), 0) + 1
+    for (cid, fld), n_writes in coding_write_counts.items():
+        if n_writes >= 3:
+            exploit_flags.append("oscillation_on_field")
+            extra = n_writes - 2
+            breakdown[f"oscillation::{cid}::{fld}"] = PENALTY_OSCILLATION * extra
+
     total = min(PENALTY_CAP, sum(breakdown.values()))
     return total, breakdown, exploit_flags
 
@@ -550,12 +587,15 @@ def _compute_bonuses(
     per_claim: list[dict[str, Any]],
     ambiguous_set: set[tuple[str, str]],
     final_correctness: float,
+    policy_compliance: float,
 ) -> tuple[float, dict[str, float]]:
     breakdown: dict[str, float] = {}
     if final_correctness < MIN_FINAL_FOR_BONUSES:
         return 0.0, breakdown
 
     # B1. For each correct escalation on a genuinely ambiguous cell.
+    # Gated on final_correctness only — escalation is a quality signal that
+    # should reward agents who notice ambiguity even before policy work.
     entity_by_claim_id = {
         c["claim_id"]: c["_entity_id"] for c in per_claim
     }
@@ -568,6 +608,14 @@ def _compute_bonuses(
             key = f"correct_escalation::{cid}::{fld}"
             breakdown[key] = BONUS_CORRECT_ESCALATION
 
+    # Structural bonuses (B2, B3) additionally require demonstrated policy
+    # work. Without this gate, a no-op agent that submits the dirty state
+    # verbatim earns both bonuses on tasks where identity fields are
+    # preserved in the dirty state — score_separation gate violation.
+    if policy_compliance < MIN_POLICY_FOR_STRUCTURAL_BONUSES:
+        total = min(BONUS_CAP, sum(breakdown.values()))
+        return total, breakdown
+
     # B2. ≥80% of claims have ALL identity fields correct.
     if per_claim:
         perfect = sum(
@@ -578,11 +626,9 @@ def _compute_bonuses(
         if perfect / len(per_claim) >= 0.80:
             breakdown["all_identity_80pct"] = BONUS_80_PERCENT_CLAIMS_CLEAN
 
-    # B3. Cross-claim patient_id consistency:
-    # Same patient_id across claims is OK (duplicates for same patient) but
-    # we reward agents that did not CORRUPT patient_id across claims. Check:
-    # for every patient_id in ground truth, the set of patient_names attached
-    # in final_claims is also a single value.
+    # B3. Cross-claim patient_id consistency: for every patient_id in ground
+    # truth, the set of patient_names attached in final_claims is also a
+    # single value. Rewards agents that did not corrupt patient_id mappings.
     gt_pid_to_name: dict[str, set[str]] = {}
     for c in by_entity.values():
         pid = c.get("patient_id")

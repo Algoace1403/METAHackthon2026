@@ -360,17 +360,39 @@ def train(
     # Cores have no native bf16 and bf16=True there is slow/broken.
     use_bf16, use_fp16 = preferred_dtype_flags()
 
-    # Mask loss to assistant tokens only. We would normally use TRL's
-    # ``SFTConfig(assistant_only_loss=True)``, but Qwen2.5-Instruct's
-    # chat_template lacks the ``{% generation %}`` markers TRL needs for
-    # that path — verified locally by ``medibill.preflight``. The
-    # template-independent alternative is
-    # ``DataCollatorForCompletionOnlyLM``: the collator searches every
-    # tokenised example for the literal ``response_template`` byte sequence
-    # and masks everything before it so only the assistant turn contributes
-    # to the loss. For ChatML the boundary is the assistant turn opener.
+    # Pre-apply Qwen2.5's chat template so each row arrives at SFTTrainer as
+    # a flat ``text`` string. trl's ``SFTTrainer._prepare_dataset`` then
+    # tokenises ``text`` and hands token IDs to the collator. Without this
+    # step the trainer crashes — its conversational-format auto-detection
+    # only works on the very latest trl, and our pinned version expects a
+    # ``dataset_text_field``. We also drop every other column so trl's
+    # default collation does not try to batch metadata strings as tensors.
+    ds = ds.map(
+        lambda row: {
+            "text": tokenizer.apply_chat_template(
+                row["messages"],
+                tokenize=False,
+                add_generation_prompt=False,
+            )
+        }
+    ).select_columns(["text"])
+
+    # Mask loss to assistant tokens only. We pass response_template AND
+    # instruction_template as TOKEN-ID lists rather than strings: BPE
+    # boundaries can shift when ``<|im_start|>assistant\n`` is tokenised
+    # in isolation vs inside a full ChatML string, and a string-template
+    # subsequence search will then silently fail to match — leaving the
+    # collator masking nothing and the model training on user/system
+    # tokens too. Token-ID matching is exact and robust.
+    response_template_ids = tokenizer.encode(
+        "<|im_start|>assistant\n", add_special_tokens=False
+    )
+    instruction_template_ids = tokenizer.encode(
+        "<|im_start|>user\n", add_special_tokens=False
+    )
     collator = DataCollatorForCompletionOnlyLM(
-        response_template="<|im_start|>assistant\n",
+        response_template=response_template_ids,
+        instruction_template=instruction_template_ids,
         tokenizer=tokenizer,
         mlm=False,
     )
@@ -385,7 +407,18 @@ def train(
         fp16=use_fp16,
         logging_steps=5,
         save_steps=50,
+        # Cap checkpoint count: free Colab T4 has ~15GB disk and a rank-32
+        # LoRA checkpoint at this dataset size is ~300-500MB; without a cap
+        # ~13 checkpoints accumulate over 3 epochs and crowd the volume.
+        save_total_limit=2,
+        # Smooth the early loss spike when starting LoRA from random adapters
+        # at LR 1e-4. ~3% of total steps is standard for LoRA SFT.
+        warmup_ratio=0.03,
         max_seq_length=max_seq_length,
+        # We pre-applied the chat template above and projected to a single
+        # ``text`` column. trl's prepare path will tokenise that column,
+        # which is what DataCollatorForCompletionOnlyLM expects.
+        dataset_text_field="text",
     )
 
     trainer = SFTTrainer(
