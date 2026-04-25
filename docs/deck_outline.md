@@ -84,32 +84,36 @@ Silent policy drift
 **Title:**
 Baselines + SFT: imitation closes the gap, RL must break past
 
-**ON SLIDE (1 chart + 1 small table + 2 bullets):**
+**ON SLIDE (1 chart + 1 table + 2 bullets):**
 
-*(Chart — 4 bars on hard_drift, 20-seed means)*
+*(Chart — 4 bars on hard_drift)*
 | random | no_op | scripted | SFT |
 |---|---|---|---|
-| 0.11 | 0.08 | 0.75 | 0.76 |
+| 0.11 | 0.08 | 0.76 | 0.76 |
 
-*(Small table — SFT vs scripted per task, n=4 held-out seeds each)*
+*(Table — SFT vs scripted per task, n=10 held-out seeds, 95% CI)*
 | task | SFT | scripted | Δ |
 |---|---|---|---|
-| easy_cashless | **1.000** | 1.000 | +0.000 |
-| medium_multi_payer | **1.000** | 1.000 | +0.000 |
-| hard_drift | **0.755** | 0.764 | −0.009 |
+| easy_cashless | **1.0000 ± 0.0000** | 1.0000 ± 0.0000 | +0.0000 |
+| medium_multi_payer | **1.0000 ± 0.0000** | 1.0000 ± 0.0000 | +0.0000 |
+| hard_drift | **0.7573 ± 0.0040** | 0.7611 ± 0.0049 | −0.0037 ✓ |
+
+✓ = inside both 95% CIs
 
 - 5 exploit patterns explicitly neutralised; all five score ≤ no_op
 - `drift_bonus` and `abstention_quality` are **RL-only axes** by design (spec v3 §7.6) — GRPO target
 
 **SPEAKER NOTES (~26s spoken — leaves Q&A margin):**
-"Three baselines plus our SFT adapter on hard_drift, twenty seeds each. Random eleven, no-op eight, scripted seventy-five, our SFT seventy-six. On the held-out per-task table, SFT reaches one-point-zero on easy and medium and zero-point-seven-five-five on hard — within zero-point-zero-zero-nine of the teacher and inside the seed noise band. Imitation works. The remaining gap to a perfect score lives on two RL-only axes — drift_bonus and abstention — and GRPO is the planned next step to break past the teacher."
+"Four bars on hard_drift: random eleven, no-op eight, scripted seventy-six, SFT seventy-six. The table is n=ten held-out seeds with ninety-five-percent CIs: SFT matches scripted at one-point-zero on easy and medium with zero variance, and zero-point-seven-five-seven plus-or-minus zero-point-zero-zero-four on hard versus scripted's zero-point-seven-six-one. The three-thousandths gap is inside both noise bands — statistically indistinguishable. Imitation reaches the teacher. The remaining gap to a perfect score lives on two axes the spec designates RL-only, and GRPO is the planned next step."
 
 **SAVE THE SEED-44 STORY FOR Q&A** — the table speaks for itself; don't burn slide-5 time on the demo walkthrough.
 
 **BACKUP NOTES (do not say unless asked):**
 - SFT training: 681 steps, loss 0.42 → 0.014, LoRA rank 32 on Qwen 2.5 3B, ~90 min Colab G4
-- SFT eval reproducibility: `notebooks/sft_quickstart.ipynb` + `traces/eval.jsonl` (12 trajectories)
-- 20-seed scripted on hard_drift: sd 0.011, range [0.752, 0.781]; SFT Δ −0.009 falls inside that band
+- SFT eval: n=10 held-out seeds (16–25) × 3 tasks = 30 trajectories, zero parse failures
+- 95% CI = 1.96·sd/√n; per-seed raw scores saved at `/results/sft_eval_n10.json`
+- SFT Δ on hard_drift (−0.0037) is within both SFT-CI (±0.0040) and scripted-CI (±0.0049)
+- Verified via Codex's protocol: sha256 byte-match + fresh subprocess × 2
 - Reproducibility commands: `python -m medibill.validate_grader --task all`, `python -m medibill.demo_runner --seed 44`
 
 ---
