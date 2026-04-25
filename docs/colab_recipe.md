@@ -93,9 +93,9 @@ What you will see, in order:
 5. A per-task eval table like:
 
    ```
-   easy_cashless          n=4  trained=0.??  scripted=1.000  Δ=±0.???
-   medium_multi_payer     n=4  trained=0.??  scripted=1.000  Δ=±0.???
-   hard_drift             n=4  trained=0.??  scripted=0.764  Δ=±0.???
+   easy_cashless          n=4  sft_adapter=0.??  scripted=1.000  Δ=±0.???
+   medium_multi_payer     n=4  sft_adapter=0.??  scripted=1.000  Δ=±0.???
+   hard_drift             n=4  sft_adapter=0.??  scripted=0.764  Δ=±0.???
    ```
 
 ## 5. Where artefacts land
