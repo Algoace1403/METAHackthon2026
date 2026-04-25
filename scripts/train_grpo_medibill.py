@@ -386,12 +386,19 @@ def main() -> None:
     task_filter = None if args.task_filter == "all" else args.task_filter
 
     # ---- model: load SFT adapter, then RE-ATTACH LoRA for training ----
-    print("[grpo] Loading model and tokenizer (Unsloth + 4-bit)...")
+    print("[grpo] Loading model and tokenizer (Unsloth + 4-bit, bf16)...")
+    import torch  # noqa: WPS433
     from unsloth import FastLanguageModel  # noqa: WPS433
+    # Explicit bfloat16 dtype — fixes "self and mat2 must have the same dtype,
+    # got Half and Float" crash in Unsloth's apply_lora_mlp_swiglu kernel.
+    # When dtype=None, Unsloth defaults to fp16 on Colab and the new LoRA
+    # params from get_peft_model land in fp32, producing a Half/Float mix
+    # the fast_lora kernel rejects. bf16 keeps everything in one precision
+    # that the kernel accepts.
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=str(args.sft_adapter),
         max_seq_length=2048,
-        dtype=None,
+        dtype=torch.bfloat16,
         load_in_4bit=True,
     )
 
