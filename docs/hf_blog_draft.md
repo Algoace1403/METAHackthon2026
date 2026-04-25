@@ -102,7 +102,7 @@ def _axis_drift_bonus(tool_log, drift_events, submitted_ids, per_claim) -> float
     # Otherwise 0.0. Prevents polling-based memorisation of drift timing.
 ```
 
-Three different exploit patterns were specifically ruled out and tested: polling-based drift detection (`periodic_lookup`), bare submission (`no_op`), and oscillation-based pseudo-work. All five tested exploits score ≤ no_op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance.
+Five exploit patterns were specifically ruled out and tested — `ack_spammer`, `escalate_everything`, `oscillator`, `double_count`, and `periodic_lookup`. All five score ≤ no_op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance. The gate runs on every commit.
 
 ## 5. Baselines and the drift acceptance gap
 

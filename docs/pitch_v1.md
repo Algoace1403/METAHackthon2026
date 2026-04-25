@@ -61,10 +61,10 @@
 - No announcement — no observation flag, no metadata key
 - `submit_claim` is graded against the policy at submit time
 - Only path to the new rules: a fresh `insurance_lookup` call
-- Scripted baseline: 1.00 on easy, **0.77 on drift** — that 0.23 gap is the signal
+- Scripted baseline: 1.00 on easy, **0.76 on drift** — that 0.24 gap is the signal
 
 **Speaker line:**
-"Here is what makes the environment test reasoning instead of memorisation. On hard tasks, the policy changes mid-episode — but we do not tell the agent. There is no flag, no event, no hint. The only way the agent learns the rules changed is to call `insurance_lookup` again. Submissions are graded against the policy at submit time, not against what the agent believes. A scripted baseline drops from 1.0 on easy to 0.77 on the drift task. That 0.23 gap is what we train against."
+"Here is what makes the environment test reasoning instead of memorisation. On hard tasks, the policy changes mid-episode — but we do not tell the agent. There is no flag, no event, no hint. The only way the agent learns the rules changed is to call `insurance_lookup` again. Submissions are graded against the policy at submit time, not against what the agent believes. A scripted baseline drops from 1.0 on easy to 0.76 on the drift task. That 0.24 gap is what we train against."
 
 ---
 

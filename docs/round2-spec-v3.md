@@ -337,9 +337,7 @@ All three must exist before travel on Friday.
 
 ### 10.3 Training result (1:15–2:30)
 
-> "We trained Qwen 2.5-3B. Base model first. Then SFT on forty filtered trajectories. Then RFT iteration using the same grader. Here's the score separation across baselines and checkpoints. [show bar chart] Here's a rollout on the hard drift task. [show before/after]"
-
-*(No specific numbers until measured. The chart shows whatever we actually got.)*
+> **Superseded.** This section was an early pitch draft written when training results were planned. The submission is environment-first; the current authoritative pitch script is `docs/pitch_v1.md` (slide 5 specifically). Do not present from this paragraph — it overclaims a training run that was not executed inside the hackathon compute window.
 
 ### 10.4 The ask (2:30–3:00)
 
