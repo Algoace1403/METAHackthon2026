@@ -403,7 +403,7 @@ def train(
 
     trainer = SFTTrainer(
         model=lora_model,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         args=cfg,
         train_dataset=ds,
     )
