@@ -14,11 +14,23 @@ tags:
 
 # MediBill-Env — Round 2 (Meta × Scaler OpenEnv Hackathon)
 
+> **What this environment tests:** whether an LLM agent can detect that an
+> insurer's billing policy *silently changed mid-task* and re-query the rules
+> before submitting a claim against stale state.
+
 OpenEnv environment where an LLM agent closes cashless Indian health-insurance
 claims inside the IRDAI-mandated 3-hour clock while the insurer's policy
 rules drift silently mid-episode. The agent's only way to observe the
 new rules is a fresh `insurance_lookup` call — submissions are graded
 against the policy active at submit time, not what the agent remembers.
+
+**Why this domain.** IRDAI's 2024 Master Circular gives hospitals 1 hour for
+pre-auth and 3 hours for final discharge on every cashless claim. Miss the
+clock and the cost overrun comes from the insurer's shareholder funds.
+FY24: ~₹26,000 cr disallowed; ~13% of pre-auths still miss the window.
+A rules engine catches schema errors. It cannot catch *staleness* —
+yesterday's correct rule is today's wrong claim. That's the failure mode
+we made graded.
 
 ## Licensing and data disclaimer
 
@@ -104,12 +116,15 @@ flowchart LR
 ```bash
 git clone https://github.com/Algoace1403/METAHackthon2026 && cd METAHackthon2026
 pip install -e .
-python -m medibill.demo_runner --seed 44       # one narrated episode, ~30 s
-python -m medibill.test_exploits               # 5-exploit gate, ~5 s
- python -m medibill.validate_grader --task all  # 3-baseline separation gate
-python -m medibill.test_exploits               # 5-exploit gate, ~5 s
- python -m medibill.validate_grader --task all  # 3-baseline separation gate
+python -m medibill.demo_runner --seed 44         # one narrated episode, ~30 s
+python -m medibill.test_exploits                 # 5-exploit gate, ~5 s
+python -m medibill.validate_grader --task all    # 3-baseline separation gate
 ```
+
+**Expected output (verify in 30 s):**
+- `demo_runner` → `FINAL COMPOSITE SCORE:  0.753`
+- `test_exploits` → `EXPLOIT GATE PASSED — all five attacks earn at most no_op score.`
+- `validate_grader` → `GRADER SEPARATION GATE PASSED.` (`scripted - random ≥ 0.20` on every task)
 
 The narrated demo run lands at composite score **0.753** on seed 44: drift fires silently at step 23, the scripted policy never re-queries `insurance_lookup`, submits the remaining claims under the now-stale `v1.3` rules. That 0.753 is the *cost of carrying a stale policy model into submit*, not a sign of recovery.
 
@@ -131,11 +146,24 @@ The narrated demo run lands at composite score **0.753** on seed 44: drift fires
 | HuggingFace Space | *Deploy via [`docs/hf_space_push.md`](docs/hf_space_push.md); link in Discord post once live* |
 
 
+## License + Citation
+
+**Code:** MIT. **Data:** see *Licensing and data disclaimer* at the top.
+
+If you reference this work, please cite as:
+
+```
+@misc{medibill-env-2026,
+  title  = {MediBill-Env: An OpenEnv for Silent Policy Drift in Indian Health-Insurance Claim Reconciliation},
+  author = {Anuj Kumar Soni},
+  year   = {2026},
+  howpublished = {\\url{https://github.com/Algoace1403/METAHackthon2026}},
+  note   = {Meta x Scaler OpenEnv Hackathon Round 2}
+}
+```
+
 ## Round 1 lineage
 
-This repo started as the Round-1 submission **DataClean-Env** (a separate
-data-cleaning environment) and was rebuilt for Round 2 as MediBill-Env.
-Round-1 code, tests, and submission evidence have been removed from this
-tree to keep the Round-2 evaluation surface clean. The Round-1 artefacts
-remain in git history at tag `round-1-final` for anyone who wants to
-diff lineage.
+This repo restarted from the Round-1 submission **DataClean-Env** at tag
+`round-1-final` and was rebuilt for Round 2 as MediBill-Env. Round-1 code,
+tests, and submission evidence are removed to keep the Round-2 surface clean.

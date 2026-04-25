@@ -95,7 +95,7 @@ What you will see, in order:
    ```
    easy_cashless          n=4  sft_adapter=0.??  scripted=1.000  Δ=±0.???
    medium_multi_payer     n=4  sft_adapter=0.??  scripted=1.000  Δ=±0.???
-   hard_drift             n=4  sft_adapter=0.??  scripted=0.764  Δ=±0.???
+   hard_drift             n=4  sft_adapter=0.??  scripted=0.754  Δ=±0.???
    ```
 
 ## 5. Where artefacts land
