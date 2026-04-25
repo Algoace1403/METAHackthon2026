@@ -50,12 +50,13 @@ data (credentialed access + DUA).
 - **Documentation:** `docs/round2-spec-v3.md` (design), `docs/colab_recipe.md`
   (paste-ready Colab runbook)
 
-## Round 1 lineage — DataClean-Env
+## Round 1 lineage — DataClean-Env (historical only)
 
-Round 2 extends a Round 1 submission built around a generic data-cleaning
-environment. The remainder of this README is the Round 1 technical
-description, kept here for lineage and because the Round 1 HF Space is
-still live.
+> **Everything below this banner is the Round 1 submission.** It is kept
+> for lineage continuity and because the Round 1 HF Space is still live.
+> It does **not** describe MediBill-Env — different actions, different
+> tasks, different grader. For Round 2 evaluation, please use only the
+> sections above and the documents in `docs/round2-spec-v3.md`.
 
 ---
 

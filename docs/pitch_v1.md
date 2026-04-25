@@ -68,41 +68,34 @@
 
 ---
 
-## Slide 5 — Training result (2:00–2:30)
+## Slide 5 — Live measurements (2:00–2:30)
 
-**Title:** "Qwen 2.5-3B + LoRA SFT, 3,632 examples"
+**Title:** "Three baselines, one drift gap"
 
 **Bullets on screen:**
-- `[INSERT 4-bar chart placeholder: random / no_op / scripted / SFT on hard_drift]`
-- Training: 48 scripted trajectories, 3,632 chat examples, ~680 steps
-- Eval: held-out 12 trajectories (seeds 16–19, disjoint from training)
-- Loss dropped from `[INSERT final_loss]` starting; `[INSERT parse_fails]` parse failures on eval
-- SFT picks up the core workflow — before/after visible in the rightmost bar
+- 3-bar chart: random 0.32 · no_op 0.16 · scripted 0.76 (10-seed means on hard_drift)
+- Scripted on easy 1.00 → on hard_drift 0.76. Δ 0.24 is the **drift acceptance gap**
+- Five exploit patterns explicitly neutralised; all five score ≤ no_op
+- The video below shows the agent re-querying after silent drift, scoring 0.762 on a single seed
 
 **Speaker line:**
-"We trained Qwen 2.5-3B with LoRA SFT on thirty-six hundred chat examples filtered from forty-eight scripted trajectories. Evaluation was on twelve trajectories whose seeds were never in training. [Point at chart.] Random stays under 0.3. No-op inherits correct-by-default identity credit. Scripted hits the structural ceiling. Our SFT bar sits [INSERT: here / below / above], and that delta is what training bought us on the drift task specifically."
-
-**ALTERNATIVE SCRIPT if SFT underperforms scripted on hard_drift (likely):**
-
-"We trained Qwen 2.5-3B with LoRA SFT. [Point at chart.] The SFT bar on hard_drift is X, close to but not exceeding scripted's 0.77. That ceiling is structural — our rubric has two axes that are intentionally RL targets and not SFT-learnable, so the SFT-reachable maximum on this task is around 0.80. What SFT gave us is a visible improvement on the four core-workflow axes over the untrained base model. The next pass is GRPO to push past the structural SFT ceiling."
+"On the hardest task, drift fires silently somewhere between step 10 and 39 of the episode. Watch the three baselines. [Point at chart.] Random sits at 0.32. No-op gets correct-by-default identity credit at 0.16. Our tool-faithful scripted policy hits 0.76. The same scripted policy on the no-drift easy task scores 1.00 — that 0.24 gap is the drift acceptance gap, and it's the signal a trained model would learn against. The video shows one episode end-to-end: drift fires at step 23, the agent re-queries, and submits at 0.762. Numbers reproduce on any laptop with `python -m medibill.demo_runner --seed 44`."
 
 ---
 
 ## Slide 6 — Scope + close (2:30–3:00)
 
-**Title:** "Honest scope, three sub-prize targets"
+**Title:** "Environment-first submission, three sub-prize targets"
 
 **Bullets on screen:**
-- **SFT does not train `abstention_quality` or `drift_bonus`** — explicit RL-only targets (spec v3 §7.6)
-- The code enforces every claim: disjoint partition, 5 exploit tests, prompt-version handshake
-- Three sub-prize hits:
-  - Scaler AI Labs (enterprise multi-app workflow)
-  - Patronus AI (schema / policy drift)
-  - Snorkel AI (programmatic expert rubric)
+- We submit the **environment + grader + baselines + drift mechanic**. SFT and RL are explicit follow-up work, not claims today.
+- Two of six axes — `abstention_quality` and `drift_bonus` — are RL-only targets (spec v3 §7.6). We did not relabel scripted as trained.
+- The code enforces every claim: disjoint partition asserted at import time, five exploit tests in the repo, prompt-version handshake on the corpus.
+- Three sub-prize hits: Scaler AI Labs (enterprise multi-app), Patronus AI (schema/policy drift), Snorkel AI (programmatic expert rubric).
 - Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: `[URL]`
 
 **Speaker line:**
-"One honest caveat: our SFT does not train two of the six rubric axes — abstention quality and drift bonus. Those need reward signal, not imitation. They are explicit RL targets in our roadmap, not SFT targets, and we would be overclaiming to present SFT numbers on them. Everything else we say, the code enforces: disjoint grader partitioning asserted at import time, five exploit tests in the repo, a prompt-version handshake that refuses to train on stale data. We target three sub-prizes — Scaler multi-app, Patronus drift, Snorkel programmatic rubric — and the repo link is on screen. Thank you."
+"We are submitting environment-first. What we are claiming today is the environment, the six-axis deterministic grader, the silent-drift mechanic, and a tool-faithful scripted baseline whose 0.24 gap on the drift task is the signal future training will close. We did not finish the SFT pass in time, and we are not relabelling the scripted bar as trained. Two axes — abstention quality and drift bonus — are RL-only targets in our pipeline, not SFT targets, and that scoping is in the spec. Everything else, the code enforces: disjoint partition asserted at import, five exploit tests, a prompt-version handshake. Three sub-prize fits: Scaler enterprise multi-app, Patronus schema drift, Snorkel programmatic rubric. Repo on screen. Thank you."
 
 ---
 

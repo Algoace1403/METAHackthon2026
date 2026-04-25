@@ -1,6 +1,6 @@
 # MediBill-Env: Training an LLM to Survive Silent Policy Drift in Indian Insurance Claims
 
-*A Meta × Scaler OpenEnv Hackathon Round 2 submission. Theme 3.1 — Professional World Modeling. Status: SFT-first; RL pass on the roadmap.*
+*A Meta × Scaler OpenEnv Hackathon Round 2 submission. Theme 3.1 — Professional World Modeling. Status: environment-first submission; SFT and RL passes are explicit follow-up work, not claimed today.*
 
 ---
 
@@ -9,8 +9,9 @@
 - **Problem.** Indian IRDAI regulation gives hospitals 1 hour for pre-auth and 3 hours for final discharge on every cashless insurance claim. Insurance policies get updated silently between shifts — rule changes, renamed codes, new signature requirements. A human coder who misses the update submits under stale rules and the claim is disallowed. FY24: ₹26,000 crore disallowed (+19% YoY).
 - **Environment.** An OpenEnv where an LLM plays the medical coder under that clock. 3 tools, 3 task tiers, 6-axis deterministic grader with formally-disjoint field partition enforced by an import-time assertion.
 - **Hero mechanic.** On hard tasks the active policy mutates mid-episode without announcement. The agent's only path to the new rules is a fresh `insurance_lookup` call. `submit_claim` is graded against the policy active **at submit time**, not against the policy the agent believes.
-- **Training.** Qwen2.5-3B-Instruct + LoRA SFT on 3,632 chat examples filtered from 144 scripted trajectories. Held-out eval on 12 trajectories whose seeds never appeared in training.
-- **Result.** `[INSERT per-task before/after table after Wed Colab run: easy_cashless, medium_multi_payer, hard_drift × trained, scripted, Δ]`
+- **Baselines wired and measured.** Three independent baselines on the hardest task `hard_drift` (10-seed means): random `0.32`, no-op `0.16`, tool-faithful scripted `0.76`. The same scripted policy hits `1.00` on `easy_cashless` — that **0.24 drift acceptance gap** is the headline measurable signal.
+- **Five exploits explicitly neutralised.** `ack_spammer`, `escalate_everything`, `oscillator`, `double_count`, `periodic_lookup` — all five score ≤ no-op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance. Test gate runs on every commit.
+- **Training pipeline.** Qwen2.5-3B-Instruct + LoRA SFT on 3,632 chat examples filtered from 48 scripted trajectories is shipped, runnable on a free-tier Colab T4 (capability-conditional bf16/fp16, `DataCollatorForCompletionOnlyLM`, prompt-version SHA guard). We did not run it inside the hackathon compute window, so we do not report SFT numbers here.
 - **Repo:** `https://github.com/Algoace1403/METAHackthon2026`
 - **HF Space:** `[URL after push]`
 - **Spec:** `docs/round2-spec-v3.md`
@@ -103,9 +104,23 @@ def _axis_drift_bonus(tool_log, drift_events, submitted_ids, per_claim) -> float
 
 Three different exploit patterns were specifically ruled out and tested: polling-based drift detection (`periodic_lookup`), bare submission (`no_op`), and oscillation-based pseudo-work. All five tested exploits score ≤ no_op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance.
 
-## 5. Training
+## 5. Baselines and the drift acceptance gap
 
-We train Qwen2.5-3B-Instruct with LoRA SFT under these settings:
+Before any training, we measure three independent baselines on every task. The gap between the strongest baseline (tool-faithful scripted) on the no-drift task vs the drift task is the **drift acceptance gap** — it is the entire reason this environment is hard, and it is what future training will close.
+
+| Task | random | no_op | scripted |
+|---|---:|---:|---:|
+| `easy_cashless` | 0.31 | 0.16 | **1.00** |
+| `medium_multi_payer` | 0.30 | 0.16 | **1.00** |
+| `hard_drift` (10-seed mean) | 0.32 | 0.16 | **0.76** |
+
+The 0.24 drop on `hard_drift` is not the model failing at coding — `coding_engine` is identical across tasks. It is the policy mutating mid-episode and the agent submitting against a stale mental model. A fresh `insurance_lookup` recovers the gap; the demo video shows exactly that on seed 44, scoring 0.762.
+
+A separation gate runs on every commit and asserts `scripted - no_op ≥ 0.5` on `easy_cashless` and `≥ 0.4` on `hard_drift`. Current margins: `+0.84` and `+0.60`.
+
+## 6. Training pipeline (shipped, not measured today)
+
+The full Qwen2.5-3B-Instruct + LoRA SFT pipeline ships in this repo and is documented to run on free-tier Colab. We did not execute it inside the hackathon's compute window, so we do not show SFT bars on the chart above. The pipeline is included so judges can reproduce the next step end-to-end:
 
 - **Trajectories.** 144 total (16 seeds × 3 tasks × {scripted, random, no_op}), filtered to 48 scripted-heuristic trajectories for SFT. Random and no_op trajectories exist as a contrast pool but are held out of training.
 - **Eval.** 12 trajectories (seeds 16–19, scripted), never seen in training.
@@ -113,7 +128,7 @@ We train Qwen2.5-3B-Instruct with LoRA SFT under these settings:
 - **Precision.** Capability-conditional: bf16 on Ampere+, fp16 on Turing.
 - **Prompt-version guard.** Every trajectory carries a SHA-derived `prompt_version`. The training loader refuses records whose version does not match the installed one.
 
-### 5.1 What SFT is expected to improve (and what it is not)
+### 6.1 What SFT is expected to improve (and what it is not)
 
 Four of the six rubric axes are SFT-reachable from scripted trajectories:
 
@@ -124,26 +139,27 @@ Two axes are **RL-only** targets in our pipeline, scoped explicitly in `docs/rou
 - `abstention_quality` — the ambiguous-cell ground truth is not in the agent's observation, so an abstention-aware scripted policy would need to read hidden state.
 - `drift_bonus` — the scripted policy detects drift by schedule, not by policy staleness; meaningful drift calibration requires reward signal.
 
-### 5.2 Result
+### 6.2 Why we are not showing SFT bars
 
-`[INSERT 4-bar chart: random / no_op / scripted / SFT on hard_drift, with 95% CIs]`
+Two reasons, in this order:
 
-`[INSERT narration of specific numbers from parse_sft_log output: per_task, parse_fails, steps_done, final_loss]`
+1. **Honesty.** A scripted bar relabelled as "trained" is the single most-flagged failure mode in this hackathon's judging rubric. We have a working SFT script and a separation gate; we did not run it inside our compute window, so we do not claim a number.
+2. **The interesting axis isn't SFT-reachable anyway.** Spec v3 §7.6 documents that two of the six rubric axes (`abstention_quality`, `drift_bonus`) are explicit RL-only targets. SFT on scripted trajectories cannot teach the model to detect drift via policy staleness — only via schedule, which the grader ignores. The honest training story is "SFT for the four imitable axes, then RL for the two reasoning axes." We ship the SFT half; we did not falsify the RL half.
 
-## 6. Limitations
+## 7. Limitations
 
-- SFT does not improve `abstention_quality` or `drift_bonus` in our pipeline. Those are RL targets, not SFT targets.
+- We did not run SFT or RL inside the hackathon compute window. The pipeline ships and is reproducible, but the numbers in this post are baselines, not training results.
 - Scripted baseline scores 1.000 on `easy_cashless` and `medium_multi_payer`, so SFT can only tie or lose on those tasks. The meaningful SFT delta is on `hard_drift` specifically.
 - The drift candidate step set is 30 values (`range(10, 40)`) — a training policy could in principle poll every candidate step cheaply. We test this as an exploit (`periodic_lookup`); current grader rejects it, but we have not proven polling is universally impossible.
 - Held-out eval is 12 trajectories. Means are indicative; 95% CIs are wide. Scaling the eval to 60+ trajectories is a post-hackathon priority.
 
-## 7. Links
+## 8. Links
 
 - **Repository:** `https://github.com/Algoace1403/METAHackthon2026`
 - **HF Space:** `[URL]`
 - **Specification:** `docs/round2-spec-v3.md`
 - **Runbook:** `docs/colab_recipe.md`
 
-## 8. Acknowledgements
+## 9. Acknowledgements
 
 Reviews by Codex and ChatGPT caught 22 substantive issues between spec v1 and v3 (numbered in `docs/round2-spec-v3.md §0`). The final design is stronger because of those reviews.
