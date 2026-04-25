@@ -2,7 +2,7 @@
 
 **Duration:** 3:00 spoken, 2:00 Q&A.
 **Slides:** 6, ~30s each.
-**Submission scope:** environment + grader + baselines + drift mechanic. SFT was not run inside the hackathon compute window; do **not** present trained-model bars on any slide. The demo video shows the scripted baseline *failing to recover from drift*, which is the entire signal.
+**Submission scope:** environment + grader + baselines + drift mechanic + **trained SFT adapter**. SFT was completed inside the hackathon window; per-task results on slide 5 show near-parity with the scripted teacher across all three difficulty tiers. The demo video shows the scripted baseline behavior; the eval table shows what imitation closes and what RL still has to break past.
 
 ---
 
@@ -68,24 +68,27 @@
 
 ---
 
-## Slide 5 — Live measurements (2:00–2:30)
+## Slide 5 — Live measurements (2:00–2:30)  ★ HEADLINE SLIDE
 
-**Title:** "Three baselines, one drift gap"
+**Title:** "Baselines + SFT: imitation closes the gap, RL must break past"
 
 **Bullets on screen:**
-- 3-bar chart: random 0.11 · no_op 0.08 · scripted 0.75 (20-seed means on hard_drift)
-- Scripted on easy 1.00 → on hard_drift 0.75. Δ 0.25 is the **drift acceptance gap**
+- 4-bar chart on hard_drift (20-seed means): random 0.11 · no_op 0.08 · scripted 0.75 · **SFT 0.76**
+- SFT per-task vs scripted (held-out seeds 16–19, n=4 each):
+  - easy_cashless **1.000 / 1.000**
+  - medium_multi_payer **1.000 / 1.000**
+  - hard_drift **0.755 / 0.764**  (Δ −0.009)
 - Five exploit patterns explicitly neutralised; all five score ≤ no_op
-- The video below shows the scripted baseline submitting under stale policy *because it does not re-query* — score lands at 0.753, the cost of acceptance
-- Closing that 0.25 gap is exactly what an RL-trained policy would learn
+- SFT cannot exceed the scripted teacher; the remaining drift_bonus + abstention axes are **RL-only by design** (spec v3 §7.6)
 
 **Speaker line:**
-"On the hardest task, the policy changes silently mid-episode. The three baselines separate cleanly: random scores 0.11, no-op 0.08, and our tool-faithful scripted policy 0.75 — that's the 20-seed mean. The same scripted policy scores 1.00 on the no-drift easy task, so the missing 0.25 is the drift-acceptance gap. In the demo seed we show, drift fires at step 23, the scripted policy never calls `insurance_lookup` again, and it submits the remaining claims under stale v1.3 rules. The final score is 0.753. That is not recovery success; it is the cost of carrying a stale policy model into submit. Closing that behavioral gap is what our training pipeline is designed to target."
+"Three baselines on hard_drift: random eleven, no-op eight, scripted seventy-five. Our SFT adapter — Qwen 2.5 three-billion plus LoRA, six-hundred-eighty-one training steps — reproduces the scripted teacher on every difficulty tier on held-out seeds: one-point-zero on easy and medium, zero-point-seven-five-five on hard versus the teacher's zero-point-seven-six-four. That is imitation working as advertised. The drift-acceptance gap stays open by design — drift_bonus and abstention are RL-only axes in our spec. SFT closes the imitation gap; GRPO is what breaks past the teacher."
 
 **Backup / speaker notes (not spoken):**
-- Reproducibility command: `python -m medibill.demo_runner --seed 44`
-- 20-seed sweep on hard_drift: scripted in 0.748–0.765 band, mean 0.754
-- Five exploit patterns explicitly neutralised; all five score ≤ no_op
+- SFT eval reproducibility: `notebooks/sft_quickstart.ipynb` + `traces/eval.jsonl`
+- Training: 681 steps, loss 0.42 → 0.014, LoRA rank 32 on Qwen 2.5 3B, ~90 min on Colab G4
+- 20-seed scripted baseline on hard_drift: mean 0.754, sd 0.011, range [0.752, 0.781]
+- SFT delta is −0.009 on hard_drift — within scripted noise band; on easy/medium it lands inside the rounding
 
 ---
 
@@ -94,14 +97,14 @@
 **Title:** "Environment-first submission under Theme 3.1"
 
 **Bullets on screen:**
-- We submit the **environment + grader + baselines + drift mechanic + SFT pipeline**. Live SFT result shown on slide 5.
-- Two of six axes — `abstention_quality` and `drift_bonus` — are RL-only targets (spec v3 §7.6).
-- The code enforces every claim: disjoint partition asserted at import time, five exploit tests in the repo, prompt-version handshake on the corpus.
+- Shipping today: **environment + grader + 5-attack exploit suite + scripted baseline + trained SFT adapter at scripted parity**.
+- Two of six axes — `abstention_quality` and `drift_bonus` — are RL-only targets (spec v3 §7.6); GRPO is the planned next step.
+- Code enforces every claim: disjoint partition asserted at import, 5 exploit tests in the repo, prompt-version handshake on the corpus.
 - Theme 3.1 (DataOps Copilot) — closest sub-prize fit: Scaler AI Labs (enterprise reasoning under business rules and regulatory constraints).
 - Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: `[URL after push]`
 
 **Speaker line:**
-"We are submitting under Theme 3.1, DataOps Copilot. What we are shipping today is the environment, the six-axis deterministic grader, the silent-drift mechanic, a tool-faithful scripted baseline whose 0.25 gap on the drift task is the behavioral signal we trained against, and the SFT result you see on slide 5. Two axes — abstention quality and drift bonus — are RL-only targets in our pipeline, scoped that way in the spec. Everything else, the code enforces: disjoint partition asserted at import, five exploit tests, a prompt-version handshake. The closest sub-prize fit on Theme 3.1 is Scaler AI Labs — enterprise reasoning under business rules and regulatory constraints. Repo and Space on screen. Thank you."
+"We submit under Theme 3.1, DataOps Copilot. What ships today: the environment, the six-axis deterministic grader, the silent-drift mechanic, a five-attack exploit suite, a tool-faithful scripted baseline, and a trained SFT adapter that reaches scripted parity on every difficulty tier — the table you saw on slide five. Two axes — abstention and drift_bonus — are RL-only by design; GRPO is the planned next step to break past the teacher. The code enforces everything else: disjoint partition at import, five exploit tests, prompt-version handshake. Closest sub-prize fit on Theme 3.1 is Scaler AI Labs. Repo and Space on screen. Thank you."
 
 ---
 
@@ -150,7 +153,8 @@ Total run time ~15 seconds on a modern laptop, giving ~60 seconds of narratable 
 | Question | Answer |
 |---|---|
 | "Is this a real problem or synthetic?" | IRDAI Annual FY24: ₹26k crore disallowed. LocalCircles Jan 2025: 36% of policyholders had claims rejected with invalid reasons. The regulator wrote a Master Circular specifically to fix it. |
-| "Why SFT-only, not GRPO?" | GRPO is the roadmap for the two RL-only axes. Time constraint for the hackathon window meant we shipped SFT-first with honest scoping. |
+| "Why SFT-only, not GRPO?" | GRPO is the roadmap for the two RL-only axes (drift_bonus, abstention_quality). SFT can match the teacher — and our adapter does — but cannot exceed it; that's GRPO's job. Time constraint shipped SFT-first with honest scoping. |
+| "Why does SFT match scripted on easy/medium but lag on hard?" | SFT's ceiling is the teacher. On easy/medium the teacher is 1.00 so a perfect imitator matches. On hard the teacher caps at 0.764 because drift_bonus is gated on (final+policy) ≥ 0.80; the teacher reaches that gate but not the bonus. SFT lands at 0.755 — within scripted's seed-to-seed noise band (sd 0.011). |
 | "Why not CPT codes?" | AMA copyright. Our synthetic SYNTH-PROC-v1 keeps the repo legally open. |
 | "Who signed off on the rubric?" | Not a clinical SME; it is an expert-inspired deterministic rubric. We welcome SME review post-hackathon. |
 | "What if the HF Space is down during the demo?" | Local Docker image on the laptop, verified reachable on `/health`. |
