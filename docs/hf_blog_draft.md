@@ -9,7 +9,7 @@
 - **Problem.** Indian IRDAI regulation gives hospitals 1 hour for pre-auth and 3 hours for final discharge on every cashless insurance claim. Insurance policies get updated silently between shifts — rule changes, renamed codes, new signature requirements. A human coder who misses the update submits under stale rules and the claim is disallowed. FY24: ₹26,000 crore disallowed (+19% YoY).
 - **Environment.** An OpenEnv where an LLM plays the medical coder under that clock. 3 tools, 3 task tiers, 6-axis deterministic grader with formally-disjoint field partition enforced by an import-time assertion.
 - **Hero mechanic.** On hard tasks the active policy mutates mid-episode without announcement. The agent's only path to the new rules is a fresh `insurance_lookup` call. `submit_claim` is graded against the policy active **at submit time**, not against the policy the agent believes.
-- **Baselines wired and measured.** Three independent baselines on the hardest task `hard_drift` (10-seed means): random `0.32`, no-op `0.16`, tool-faithful scripted `0.76`. The same scripted policy hits `1.00` on `easy_cashless` — that **0.24 drift acceptance gap** is the headline measurable signal.
+- **Baselines wired and measured.** Three independent baselines on the hardest task `hard_drift` (20-seed means): random `0.20`, no-op `0.16`, tool-faithful scripted `0.76`. The same scripted policy hits `1.00` on `easy_cashless` — that **0.24 drift acceptance gap** is the headline measurable signal. Full per-seed data: `docs/baseline_reproducibility.csv`.
 - **Five exploits explicitly neutralised.** `ack_spammer`, `escalate_everything`, `oscillator`, `double_count`, `periodic_lookup` — all five score ≤ no-op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance. Test gate runs on every commit.
 - **Training pipeline.** Qwen2.5-3B-Instruct + LoRA SFT on 3,632 chat examples filtered from 48 scripted trajectories is shipped, runnable on a free-tier Colab T4 (capability-conditional bf16/fp16, `DataCollatorForCompletionOnlyLM`, prompt-version SHA guard). We did not run it inside the hackathon compute window, so we do not report SFT numbers here.
 - **Repo:** `https://github.com/Algoace1403/METAHackthon2026`
@@ -108,11 +108,11 @@ Five exploit patterns were specifically ruled out and tested — `ack_spammer`, 
 
 Before any training, we measure three independent baselines on every task. The gap between the strongest baseline (tool-faithful scripted) on the no-drift task vs the drift task is the **drift acceptance gap** — it is the entire reason this environment is hard, and it is what future training will close.
 
-| Task | random | no_op | scripted |
+| Task (n=20) | random | no_op | scripted |
 |---|---:|---:|---:|
-| `easy_cashless` | 0.31 | 0.16 | **1.00** |
-| `medium_multi_payer` | 0.30 | 0.16 | **1.00** |
-| `hard_drift` (10-seed mean) | 0.32 | 0.16 | **0.76** |
+| `easy_cashless` | 0.44 | 0.47 | **1.00** |
+| `medium_multi_payer` | 0.29 | 0.23 | **1.00** |
+| `hard_drift` | 0.20 | 0.16 | **0.76** |
 
 The 0.24 drop on `hard_drift` is not the model failing at coding — `coding_engine` is identical across tasks. It is the policy mutating mid-episode and the scripted baseline submitting against a stale mental model. The demo video shows the failure mode on seed 44: drift fires silently at step 23, the scripted policy never calls `insurance_lookup` again, submits every remaining claim under the now-stale `v1.3` rules, and lands at **0.762**. That 0.762 is *the cost of not recovering* — not a recovery story. The whole point of this environment is that closing this gap requires the agent to learn to re-query, which is exactly what RL training would teach.
 
