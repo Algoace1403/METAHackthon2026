@@ -329,6 +329,7 @@ def train(
 
     # Imports deferred until CUDA is confirmed so dev hosts without
     # these packages can still run `prepare`.
+    import inspect  # noqa: WPS433
     from datasets import load_dataset  # noqa: WPS433
     from trl import SFTConfig, SFTTrainer  # noqa: WPS433
     from unsloth import FastLanguageModel  # noqa: WPS433
@@ -401,11 +402,17 @@ def train(
         dataset_text_field="text",
     )
 
+    # TRL renamed the tokenizer kwarg to processing_class in v0.13. Detect
+    # which name the installed version accepts so we work on any TRL
+    # release (old: tokenizer=, new: processing_class=).
+    _sft_params = inspect.signature(SFTTrainer.__init__).parameters
+    _tok_kw = "processing_class" if "processing_class" in _sft_params else "tokenizer"
+    print(f"[sft] SFTTrainer tokenizer kwarg detected: {_tok_kw}")
     trainer = SFTTrainer(
         model=lora_model,
-        processing_class=tokenizer,
         args=cfg,
         train_dataset=ds,
+        **{_tok_kw: tokenizer},
     )
 
     # Mask loss to assistant tokens only via Unsloth's helper. This rewrites
