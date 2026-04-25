@@ -2,7 +2,7 @@
 
 **Duration:** 3:00 spoken, 2:00 Q&A.
 **Slides:** 6, ~30s each.
-**Use SFT numbers from `medibill/parse_sft_log.py` output of the Wed Colab run.**
+**Submission scope:** environment + grader + baselines + drift mechanic. SFT was not run inside the hackathon compute window; do **not** present trained-model bars on any slide. The demo video shows the scripted baseline *failing to recover from drift*, which is the entire signal.
 
 ---
 
@@ -76,10 +76,11 @@
 - 3-bar chart: random 0.32 · no_op 0.16 · scripted 0.76 (10-seed means on hard_drift)
 - Scripted on easy 1.00 → on hard_drift 0.76. Δ 0.24 is the **drift acceptance gap**
 - Five exploit patterns explicitly neutralised; all five score ≤ no_op
-- The video below shows the agent re-querying after silent drift, scoring 0.762 on a single seed
+- The video below shows the scripted baseline submitting under stale policy *because it does not re-query* — score lands at 0.762, the cost of acceptance
+- Closing that 0.24 gap is exactly what an RL-trained policy would learn
 
 **Speaker line:**
-"On the hardest task, drift fires silently somewhere between step 10 and 39 of the episode. Watch the three baselines. [Point at chart.] Random sits at 0.32. No-op gets correct-by-default identity credit at 0.16. Our tool-faithful scripted policy hits 0.76. The same scripted policy on the no-drift easy task scores 1.00 — that 0.24 gap is the drift acceptance gap, and it's the signal a trained model would learn against. The video shows one episode end-to-end: drift fires at step 23, the agent re-queries, and submits at 0.762. Numbers reproduce on any laptop with `python -m medibill.demo_runner --seed 44`."
+"On the hardest task, drift fires silently somewhere between step 10 and 39 of the episode. Watch the three baselines. [Point at chart.] Random sits at 0.32. No-op gets correct-by-default identity credit at 0.16. Our tool-faithful scripted policy hits 0.76. The same scripted policy on the no-drift easy task scores 1.00 — that 0.24 gap is the drift acceptance gap. Now watch the video: drift fires at step 23, the scripted policy never calls `insurance_lookup` again, and submits every remaining claim under the stale v1.3 rules. It still scores 0.762 — that's the *cost of not recovering* from silent drift. Closing that 0.24 gap is the entire reason this environment is interesting, and it is what an RL-trained policy would learn. Numbers reproduce on any laptop with `python -m medibill.demo_runner --seed 44`."
 
 ---
 
