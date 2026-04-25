@@ -391,7 +391,10 @@ def train(
         # Smooth the early loss spike when starting LoRA from random adapters
         # at LR 1e-4. ~3% of total steps is standard for LoRA SFT.
         warmup_ratio=0.03,
-        max_seq_length=max_seq_length,
+        # NOTE: ``max_seq_length`` is NOT passed to SFTConfig — it was removed
+        # from SFTConfig in trl 0.18+ (the version Unsloth pulls in). The
+        # value already reaches the model via FastLanguageModel.from_pretrained
+        # above, which is where Unsloth uses it for forward-pass padding.
         # We pre-applied the chat template above; SFTTrainer will tokenise
         # ``text`` for us. Loss masking happens AFTER trainer construction,
         # via Unsloth's train_on_responses_only helper below.

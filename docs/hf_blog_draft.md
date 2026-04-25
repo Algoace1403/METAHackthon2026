@@ -11,7 +11,7 @@
 - **Hero mechanic.** On hard tasks the active policy mutates mid-episode without announcement. The agent's only path to the new rules is a fresh `insurance_lookup` call. `submit_claim` is graded against the policy active **at submit time**, not against the policy the agent believes.
 - **Baselines wired and measured.** Three independent baselines on the hardest task `hard_drift` (20-seed means): random `0.11`, no-op `0.08`, tool-faithful scripted `0.75`. The same scripted policy hits `1.00` on `easy_cashless` — that **0.25 drift acceptance gap** is the headline measurable signal. Full per-seed data: `docs/baseline_reproducibility.csv`.
 - **Five exploits explicitly neutralised.** `ack_spammer`, `escalate_everything`, `oscillator`, `double_count`, `periodic_lookup` — all five score ≤ no-op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance. Test gate runs on every commit.
-- **Training pipeline.** Qwen2.5-3B-Instruct + LoRA SFT on 3,632 chat examples filtered from 48 scripted trajectories is shipped, runnable on a free-tier Colab T4 (capability-conditional bf16/fp16, `DataCollatorForCompletionOnlyLM`, prompt-version SHA guard). We did not run it inside the hackathon compute window, so we do not report SFT numbers here.
+- **Training pipeline.** Qwen2.5-3B-Instruct + LoRA SFT on 3,632 chat examples filtered from 48 scripted trajectories is shipped, runnable on a free-tier Colab T4 (capability-conditional bf16/fp16, Unsloth `train_on_responses_only` for assistant-only loss masking, prompt-version SHA guard).
 - **Repo:** `https://github.com/Algoace1403/METAHackthon2026`
 - **HF Space:** `[URL after push]`
 - **Spec:** `docs/round2-spec-v3.md`
@@ -144,7 +144,7 @@ The full Qwen2.5-3B-Instruct + LoRA SFT pipeline ships in this repo and is docum
 
 - **Trajectories.** 144 total (16 seeds × 3 tasks × {scripted, random, no_op}), filtered to 48 scripted-heuristic trajectories for SFT. Random and no_op trajectories exist as a contrast pool but are held out of training.
 - **Eval.** 12 trajectories (seeds 16–19, scripted), never seen in training.
-- **Chat format.** `{"messages": [system, user, assistant]}`. Assistant content is canonical JSON action (`sort_keys=True`). Loss is masked to assistant tokens only via `DataCollatorForCompletionOnlyLM` (Qwen2.5 has no `{% generation %}` markers so TRL's `assistant_only_loss` is not available).
+- **Chat format.** `{"messages": [system, user, assistant]}`. Assistant content is canonical JSON action (`sort_keys=True`). Loss is masked to assistant tokens only via Unsloth's `train_on_responses_only` helper, which token-ID-matches the ChatML role markers `<|im_start|>user\n` and `<|im_start|>assistant\n` to set `labels=-100` on every non-assistant token.
 - **Precision.** Capability-conditional: bf16 on Ampere+, fp16 on Turing.
 - **Prompt-version guard.** Every trajectory carries a SHA-derived `prompt_version`. The training loader refuses records whose version does not match the installed one.
 

@@ -90,8 +90,10 @@ Three baselines, one drift gap
 - Five exploit patterns explicitly neutralised; all five score ≤ no_op (`docs/img/exploits.png` if you have a backup slide)
 - Demo video (seed 44): scripted submits under stale policy and lands at 0.753; 20-seed mean is 0.754
 
-**SPEAKER NOTES:**
-"On the hardest task, the policy changes silently mid-episode. The three baselines separate cleanly: random scores 0.11, no-op 0.08, and our tool-faithful scripted policy 0.75 — that's the 20-seed mean. The same scripted policy scores 1.00 on the no-drift easy task, so the missing 0.25 is the drift-acceptance gap. In the demo seed we show, drift fires at step 23, the scripted policy never calls insurance_lookup again, and it submits the remaining claims under stale v1.3 rules. The final score is 0.753. That is not recovery success; it is the cost of carrying a stale policy model into submit. Closing that behavioral gap is what our training pipeline is designed to target."
+**SPEAKER NOTES (~26s spoken — leaves Q&A margin):**
+"Three baselines on the hardest task, twenty seeds each. Random eleven, no-op eight, scripted seventy-five. The same scripted policy hits one-point-zero on the no-drift task. That zero-point-two-five gap is the drift acceptance gap — the cost of submitting under stale rules. Closing it is the behavioral signal a learned policy would need to target."
+
+**SAVE THE SEED-44 STORY FOR Q&A** — the chart speaks for itself; don't burn slide-5 time on the demo walkthrough.
 
 **BACKUP NOTES (do not say unless asked):**
 - Reproducibility: 20-seed sweep, sd 0.011, range [0.752, 0.781]; per-seed CSV in `docs/baseline_reproducibility.csv`
@@ -106,15 +108,24 @@ Three baselines, one drift gap
 **Title:**
 Environment-first submission under Theme 3.1
 
-**ON SLIDE (5 bullets):**
-- We submit the **environment + grader + baselines + drift mechanic + SFT pipeline**. Live SFT result shown on slide 5.
+**ON SLIDE (4 bullets — pick the right bullet 1 the night before):**
+
+*Version A (if SFT bar exists on slide 5):*
+- We submit the **environment + grader + baselines + drift mechanic + SFT pipeline**. Live SFT result on slide 5.
+
+*Version B (if SFT did not run / no 4th bar):*
+- We submit the **environment + grader + baselines + drift mechanic**. SFT pipeline ships in repo; not executed in the hackathon window.
+
+*Common bullets (both versions):*
 - Two of six axes — `abstention_quality` and `drift_bonus` — are RL-only targets (spec v3 §7.6)
 - Code enforces every claim: disjoint partition asserted at import, 5 exploit tests, prompt-version handshake
-- Theme 3.1 (DataOps Copilot) — closest sub-prize fit: Scaler AI Labs (enterprise multi-app reasoning)
-- Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: huggingface.co/spaces/Algoace1403/medibill-env
+- Theme 3.1 — DataOps Copilot. Enterprise reasoning under shifting business rules.
+- Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: *(fill once pushed)*
 
-**SPEAKER NOTES:**
-"We are submitting under Theme 3.1, DataOps Copilot. What we are shipping today is the environment, the six-axis deterministic grader, the silent-drift mechanic, a tool-faithful scripted baseline whose 0.25 gap on the drift task is the behavioral signal we trained against, and the SFT result you see on slide 5. Two axes — abstention quality and drift bonus — are RL-only targets in our pipeline, scoped that way in the spec. Everything else, the code enforces: disjoint partition asserted at import, five exploit tests, a prompt-version handshake. The closest sub-prize fit on Theme 3.1 is Scaler AI Labs — enterprise reasoning under business rules and regulatory constraints. Repo and Space on screen. Thank you."
+**SPEAKER NOTES (~26s):**
+"We submit under Theme 3.1, DataOps Copilot. The environment, six-axis deterministic grader, silent drift mechanic, scripted baseline, and SFT pipeline are all shipped. Two axes — abstention and drift bonus — are RL-only by design. The code enforces every claim: disjoint partition at import, five exploit tests, prompt-version handshake. Repo and Space on screen. Thank you."
+
+**DROPPED FROM SPOKEN PITCH:** sub-prize naming. If a Scaler / Snorkel / Patronus judge asks about fit, name them. Do not pitch sub-prizes inside their own room.
 
 ---
 

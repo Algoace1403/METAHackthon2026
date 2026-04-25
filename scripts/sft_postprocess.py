@@ -79,7 +79,7 @@ def plot_loss(losses: list[float], out_path: Path) -> None:
     ax.set_ylabel("training loss")
     ax.set_title(
         f"SFT training loss (Qwen2.5-3B + LoRA, {len(losses)} logged steps)\n"
-        "DataCollatorForCompletionOnlyLM, masked to assistant tokens"
+        "Unsloth train_on_responses_only, masked to assistant tokens"
     )
     ax.grid(True, alpha=0.3)
     plt.tight_layout()

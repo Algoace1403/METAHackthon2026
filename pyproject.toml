@@ -17,15 +17,15 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.0.0", "pytest-cov>=4.0.0"]
 train = [
-    # We use Unsloth's train_on_responses_only helper for assistant-only loss
-    # masking, which works across modern trl versions. We let Unsloth control
-    # its trl/transformers/datasets transitive deps to avoid the resolver
-    # conflicts that trl pins used to cause on Colab.
-    "trl>=0.11.4",
+    # Pin to the range unsloth-zoo 2026.4.x explicitly allows
+    # (trl>=0.18.2,<=0.24.0,!=0.19.0). Without this pin pip can resolve to
+    # trl 1.2+ on Colab and the install non-deterministically downgrades.
+    "trl>=0.18.2,<0.25.0,!=0.19.0",
     "transformers>=4.45.0",
     "torch>=2.0.0",
     "accelerate>=0.30.0",
-    "datasets>=2.0.0",
+    # unsloth-zoo 2026.4.x requires datasets>=3.4.1,<4.4.0,!=4.0.*,!=4.1.0
+    "datasets>=3.4.1,<4.4.0",
 ]
 # Pulls in the OpenAI Python client so `python inference.py` runs out of the
 # box on a fresh checkout. Server image (Dockerfile) deliberately omits this

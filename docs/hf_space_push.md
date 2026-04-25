@@ -23,7 +23,7 @@ pip install 'openenv-core[core]' -q
 huggingface-cli login
 
 # 3. Push the env as a HF Space
-openenv push . --space-name <your-hf-username>/medibill-env
+openenv push . --repo-id <your-hf-username>/medibill-env
 ```
 
 Replace `<your-hf-username>` with your actual HF username.
@@ -32,7 +32,8 @@ Replace `<your-hf-username>` with your actual HF username.
 
 - Packages this repo as a HF Space
 - Uses our `openenv.yaml` (`name: medibill`, `app: medibill.server.app:app`, `port: 8000`)
-- Uses our `Dockerfile` (already validated with `openenv validate .`)
+- Uses our `Dockerfile` (root-level `__init__.py`, `client.py`, `models.py`
+  shims satisfy the `validate_env_structure` check `openenv push` runs)
 - Starts a free-tier CPU Space at `https://huggingface.co/spaces/<your-username>/medibill-env`
 - Build takes 5–10 minutes on HF's side
 - Space auto-starts; `/health` endpoint reachable once build completes
