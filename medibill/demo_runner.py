@@ -198,8 +198,9 @@ def run_demo(seed: int, color: bool, max_narrated_steps: int | None) -> int:
     print(f"    bonuses                {grade['bonuses']:+.3f}")
     print()
     print(c.bold(f"  FINAL COMPOSITE SCORE:  {c.cyan(f'{grade['score']:.3f}')}"))
-    print(c.dim("  (scripted baseline on hard_drift scores ≈ 0.76 — drift acceptance gap,"))
-    print(c.dim("   structurally capped by the two RL-only axes, is where RL training buys us."))
+    print(c.dim("  (scripted baseline on hard_drift scores ≈ 0.76. That score is the cost"))
+    print(c.dim("   of carrying a stale policy model into submit, not a sign of recovery —"))
+    print(c.dim("   it is the behavioural gap the training pipeline is designed to target."))
     print(c.dim("   See docs/round2-spec-v3.md §7.6 for the SFT target-coverage scope.)"))
     print()
 

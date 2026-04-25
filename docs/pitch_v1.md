@@ -80,7 +80,7 @@
 - Closing that 0.24 gap is exactly what an RL-trained policy would learn
 
 **Speaker line:**
-"On the hardest task, drift fires silently somewhere between step 10 and 39 of the episode. Watch the three baselines. [Point at chart.] Random sits at 0.32. No-op gets correct-by-default identity credit at 0.16. Our tool-faithful scripted policy hits 0.76. The same scripted policy on the no-drift easy task scores 1.00 — that 0.24 gap is the drift acceptance gap. Now watch the video: drift fires at step 23, the scripted policy never calls `insurance_lookup` again, and submits every remaining claim under the stale v1.3 rules. It still scores 0.762 — that's the *cost of not recovering* from silent drift. Closing that 0.24 gap is the entire reason this environment is interesting, and it is what an RL-trained policy would learn. Numbers reproduce on any laptop with `python -m medibill.demo_runner --seed 44`."
+"On the hardest task, drift fires silently somewhere between step 10 and 39 of the episode. Watch the three baselines. [Point at chart.] Random sits at 0.32. No-op gets correct-by-default identity credit at 0.16. Our tool-faithful scripted policy hits 0.76. The same scripted policy on the no-drift easy task scores 1.00 — that 0.24 gap is the drift acceptance gap. The video shows it on seed 44: drift fires silently at step 23, the scripted policy never calls `insurance_lookup` again, and submits every remaining claim under stale v1.3 rules. Final score is 0.762. That 0.762 is not recovery success — it is the cost of carrying a stale policy model into submit. Closing that 0.24 is the behavioural gap our training pipeline is designed to target. Numbers reproduce on any laptop with `python -m medibill.demo_runner --seed 44`."
 
 ---
 
