@@ -80,7 +80,7 @@
 - Closing that 0.24 gap is exactly what an RL-trained policy would learn
 
 **Speaker line:**
-"On the hardest task, the policy changes silently mid-episode. The three baselines separate cleanly: random scores 0.32, no-op 0.16, and our tool-faithful scripted policy 0.76. The same scripted policy scores 1.00 on the no-drift easy task, so the missing 0.24 is the drift-acceptance gap. In the demo seed we show, drift fires at step 23, the scripted policy never calls `insurance_lookup` again, and it submits the remaining claims under stale v1.3 rules. The final score is 0.762. That is not recovery success; it is the cost of carrying a stale policy model into submit. Closing that behavioural gap is what our training pipeline is designed to target."
+"On the hardest task, the policy changes silently mid-episode. The three baselines separate cleanly: random scores 0.32, no-op 0.16, and our tool-faithful scripted policy 0.76. The same scripted policy scores 1.00 on the no-drift easy task, so the missing 0.24 is the drift-acceptance gap. In the demo seed we show, drift fires at step 23, the scripted policy never calls `insurance_lookup` again, and it submits the remaining claims under stale v1.3 rules. The final score is 0.762. That is not recovery success; it is the cost of carrying a stale policy model into submit. Closing that behavioral gap is what our training pipeline is designed to target."
 
 **Backup / speaker notes (not spoken):**
 - Reproducibility command: `python -m medibill.demo_runner --seed 44`
