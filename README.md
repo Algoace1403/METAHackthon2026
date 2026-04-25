@@ -58,6 +58,10 @@ data (credentialed access + DUA).
 
 **Five exploit patterns** — `ack_spammer`, `escalate_everything`, `oscillator`, `double_count`, `periodic_lookup` — are explicitly neutralised: all five score ≤ no_op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance. Gate runs on every commit (`python -m medibill.test_exploits`).
 
+![Exploit gate: scripted at 0.763 vs no_op floor at 0.159 vs five attack policies all clamped at or below 0.159 on hard_drift, n=20 seeds each](docs/img/exploits.png)
+
+*Five attack patterns evaluated on `hard_drift` (n=20 seeds each), bench-marked against the no_op floor (0.159) and the tool-faithful scripted ceiling (0.763). Every red bar lands at or below the dashed yellow no_op line — the grader does not pay for ceremony, polling, or oscillation. See [`medibill/test_exploits.py`](medibill/test_exploits.py) for the attack source.*
+
 ## Reproduce the headline number on any laptop
 
 ```bash
