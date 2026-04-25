@@ -282,18 +282,31 @@ def make_hf_agent(
     import torch  # local import — this path is only used with CUDA available
 
     def _agent(messages: List[Dict[str, str]], step_idx: int) -> str:
-        prompt_ids = tokenizer.apply_chat_template(
+        # transformers >= 5.5 may return BatchEncoding instead of tensor; handle both.
+        chat_input = tokenizer.apply_chat_template(
             messages,
             return_tensors="pt",
             add_generation_prompt=True,
-        ).to(model.device)
+        )
+        if hasattr(chat_input, "input_ids"):
+            prompt_ids = chat_input.input_ids.to(model.device)
+            attention_mask = chat_input.get("attention_mask")
+            if attention_mask is not None:
+                attention_mask = attention_mask.to(model.device)
+        else:
+            prompt_ids = chat_input.to(model.device)
+            attention_mask = None
+
+        gen_kwargs = {
+            "max_new_tokens": max_new_tokens,
+            "do_sample": False,
+            "pad_token_id": tokenizer.pad_token_id or tokenizer.eos_token_id,
+        }
+        if attention_mask is not None:
+            gen_kwargs["attention_mask"] = attention_mask
+
         with torch.inference_mode():
-            out = model.generate(
-                prompt_ids,
-                max_new_tokens=max_new_tokens,
-                do_sample=False,
-                pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
-            )
+            out = model.generate(prompt_ids, **gen_kwargs)
         new_tokens = out[0][prompt_ids.shape[1]:]
         return tokenizer.decode(new_tokens, skip_special_tokens=True)
 
