@@ -130,21 +130,43 @@ def _run_eval(args: argparse.Namespace) -> int:
     if not torch.cuda.is_available():
         print("[SKIP] No CUDA device for eval.", file=sys.stderr)
         return 3
-    from peft import PeftModel  # noqa: WPS433
-    from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: WPS433
 
-    from medibill._gpu import preferred_torch_dtype  # noqa: WPS433
     from medibill.evaluate_sft import evaluate_against_eval_split, make_hf_agent
 
     print(f"\n>>> Evaluating trained adapter on {args.eval}")
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
-    base = AutoModelForCausalLM.from_pretrained(
-        args.model,
-        torch_dtype=preferred_torch_dtype(),
-        device_map="auto",
-    )
-    model = PeftModel.from_pretrained(base, args.out)
-    model.eval()
+
+    # Adapter was trained with Unsloth's FastLanguageModel, which patches the
+    # base attention layers (adds `apply_qkv` etc). Loading the LoRA adapter
+    # onto a plain transformers model breaks at `.generate()`. Use Unsloth for
+    # inference too so the adapter sees the same patched modules it was
+    # trained on.
+    try:
+        from unsloth import FastLanguageModel  # noqa: WPS433
+        model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name=str(args.out),
+            max_seq_length=2048,
+            dtype=None,
+            load_in_4bit=True,
+        )
+        FastLanguageModel.for_inference(model)
+    except Exception as exc:  # noqa: BLE001
+        print(
+            f"[WARN] Unsloth inference path failed ({exc}); "
+            f"falling back to plain transformers.",
+            file=sys.stderr,
+        )
+        from peft import PeftModel  # noqa: WPS433
+        from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: WPS433
+        from medibill._gpu import preferred_torch_dtype  # noqa: WPS433
+        tokenizer = AutoTokenizer.from_pretrained(args.model)
+        base = AutoModelForCausalLM.from_pretrained(
+            args.model,
+            torch_dtype=preferred_torch_dtype(),
+            device_map="auto",
+        )
+        model = PeftModel.from_pretrained(base, args.out)
+        model.eval()
+
     agent = make_hf_agent(model, tokenizer, max_new_tokens=args.max_new_tokens)
     report = evaluate_against_eval_split(args.eval, agent)
 
