@@ -328,22 +328,38 @@ def train(
         return 3
 
     # Imports deferred until CUDA is confirmed so dev hosts without
-    # these packages can still run `prepare`.
+    # these packages can still run `prepare`. Unsloth MUST come before trl
+    # and transformers so its monkey-patches install correctly; importing
+    # it after trl silently disables Unsloth's fast paths and prints a
+    # warning at module load.
     import inspect  # noqa: WPS433
-    from datasets import load_dataset  # noqa: WPS433
-    from trl import SFTConfig, SFTTrainer  # noqa: WPS433
     from unsloth import FastLanguageModel  # noqa: WPS433
     from unsloth.chat_templates import train_on_responses_only  # noqa: WPS433
+    from datasets import load_dataset  # noqa: WPS433
+    from trl import SFTConfig, SFTTrainer  # noqa: WPS433
 
     ds = load_dataset("json", data_files=str(dataset_path), split="train")
 
+    # T4 has no bf16 — pass explicit fp16 dtype to Unsloth when its API
+    # accepts it. Newer Unsloth versions auto-detect; older ones don't,
+    # so make this defensive via inspect.
+    _fp_params = inspect.signature(FastLanguageModel.from_pretrained).parameters
+    _fp_kwargs: dict = {}
+    if "dtype" in _fp_params:
+        _fp_kwargs["dtype"] = (
+            None if torch.cuda.is_bf16_supported() else torch.float16
+        )
     base_model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model,
         max_seq_length=max_seq_length,
         load_in_4bit=True,
+        **_fp_kwargs,
     )
-    lora_model = FastLanguageModel.get_peft_model(
-        base_model,
+
+    # Defensive PEFT kwargs — Unsloth has tightened required defaults across
+    # releases. Inspect the signature and pass each kwarg only if accepted.
+    _pp = inspect.signature(FastLanguageModel.get_peft_model).parameters
+    _peft_kwargs: dict = dict(
         r=32,
         lora_alpha=64,
         target_modules=[
@@ -352,11 +368,25 @@ def train(
         ],
         use_gradient_checkpointing="unsloth",
     )
+    for _k, _v in (
+        ("lora_dropout", 0.0),
+        ("bias", "none"),
+        ("random_state", 3407),
+        ("use_rslora", False),
+    ):
+        if _k in _pp:
+            _peft_kwargs[_k] = _v
+    lora_model = FastLanguageModel.get_peft_model(base_model, **_peft_kwargs)
 
     # Precision picks itself based on GPU capability. Ampere+ (A100, H100)
     # gets bf16 natively; Turing (T4) falls back to fp16 because its Tensor
     # Cores have no native bf16 and bf16=True there is slow/broken.
     use_bf16, use_fp16 = preferred_dtype_flags()
+    # Hard guard: T4 (cc 7.5) returns False for is_bf16_supported. If
+    # _gpu.preferred_dtype_flags ever drifts, force fp16 here so training
+    # does not silently produce NaNs.
+    if not torch.cuda.is_bf16_supported():
+        use_bf16, use_fp16 = False, True
 
     # Pre-apply Qwen2.5's chat template so each row arrives at SFTTrainer as
     # a flat ``text`` string. trl's ``SFTTrainer._prepare_dataset`` then
@@ -374,6 +404,30 @@ def train(
             )
         }
     ).select_columns(["text"])
+
+    # Build SFTConfig kwargs defensively.
+    #   * eos_token: TRL 0.18+ added a field defaulting to the literal
+    #     placeholder '<EOS_TOKEN>'. SFTTrainer validates this against the
+    #     tokenizer's vocab and crashes — Qwen2 uses '<|im_end|>'. Override
+    #     only when the field exists AND our token is actually in the vocab.
+    #   * max_length: TRL 0.18+ renamed max_seq_length and defaults to 1024.
+    #     With Qwen2.5 ChatML + system + observation + JSON action, sequences
+    #     routinely exceed 1024 → silent truncation that destroys the
+    #     assistant-token region for train_on_responses_only and crashes
+    #     under force_match=True. Pass max_length=max_seq_length when
+    #     accepted.
+    _sftconfig_params = inspect.signature(SFTConfig.__init__).parameters
+    _cfg_extra: dict = {}
+    if (
+        "eos_token" in _sftconfig_params
+        and tokenizer.eos_token
+        and tokenizer.eos_token in tokenizer.get_vocab()
+    ):
+        _cfg_extra["eos_token"] = tokenizer.eos_token
+        print(f"[sft] SFTConfig eos_token override: {tokenizer.eos_token!r}")
+    if "max_length" in _sftconfig_params:
+        _cfg_extra["max_length"] = max_seq_length
+        print(f"[sft] SFTConfig max_length set: {max_seq_length}")
 
     cfg = SFTConfig(
         output_dir=str(output_dir),
@@ -393,13 +447,10 @@ def train(
         # at LR 1e-4. ~3% of total steps is standard for LoRA SFT.
         warmup_ratio=0.03,
         # NOTE: ``max_seq_length`` is NOT passed to SFTConfig — it was removed
-        # from SFTConfig in trl 0.18+ (the version Unsloth pulls in). The
-        # value already reaches the model via FastLanguageModel.from_pretrained
-        # above, which is where Unsloth uses it for forward-pass padding.
-        # We pre-applied the chat template above; SFTTrainer will tokenise
-        # ``text`` for us. Loss masking happens AFTER trainer construction,
-        # via Unsloth's train_on_responses_only helper below.
+        # from SFTConfig in trl 0.18+. The renamed kwarg is ``max_length``,
+        # which we pass via ``_cfg_extra`` above when accepted.
         dataset_text_field="text",
+        **_cfg_extra,
     )
 
     # TRL renamed the tokenizer kwarg to processing_class in v0.13. Detect
@@ -418,17 +469,29 @@ def train(
     # Mask loss to assistant tokens only via Unsloth's helper. This rewrites
     # the trainer's internal collator to set labels=-100 on every token that
     # isn't inside an assistant turn, using the ChatML role-marker strings
-    # passed below. Replaces the older ``DataCollatorForCompletionOnlyLM``
-    # path which broke under newer trl/unsloth combinations because of the
-    # removed top-level export and BPE-boundary fragility.
-    trainer = train_on_responses_only(
-        trainer,
+    # passed below. force_match=True (the default) raises a hard error if
+    # the markers can't be located in any one example — typically caused by
+    # truncation. We set force_match=False so the helper warns and skips
+    # the bad row instead of crashing the whole run.
+    _tro_params = inspect.signature(train_on_responses_only).parameters
+    _tro_kwargs: dict = dict(
         instruction_part="<|im_start|>user\n",
         response_part="<|im_start|>assistant\n",
     )
+    if "force_match" in _tro_params:
+        _tro_kwargs["force_match"] = False
+    trainer = train_on_responses_only(trainer, **_tro_kwargs)
 
     trainer.train()
-    trainer.save_model(str(output_dir))
+    # Defensive save: trainer.save_model is the canonical path, but if the
+    # wrapped trainer has any quirk (Unsloth + LoRA edge cases), fall back
+    # to saving the adapter directly so we never lose 60+ minutes of training.
+    try:
+        trainer.save_model(str(output_dir))
+    except Exception as exc:  # noqa: BLE001
+        print(f"[WARN] trainer.save_model failed ({exc!r}); falling back to lora_model.save_pretrained")
+        lora_model.save_pretrained(str(output_dir))
+        tokenizer.save_pretrained(str(output_dir))
     print(f"[OK] SFT complete. Adapter saved to {output_dir}")
     return 0
 
