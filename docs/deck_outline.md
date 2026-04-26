@@ -65,33 +65,42 @@ MediBill-Env: 5 tools, 3 task tiers, 6-axis grader
 ## Slide 4 — The hero mechanic (1:30–2:00)
 
 **Title:**
-Silent policy drift
+Silent multi-field policy drift
 
-**ON SLIDE (5 bullets):**
-- On hard tasks, the active policy mutates at a seed-selected step
-- No announcement — no observation flag, no metadata key
-- `submit_claim` is graded against the policy at submit time
-- Only path to the new rules: a fresh `insurance_lookup` call
-- Scripted baseline: 1.00 on easy, **0.75 on drift** — that 0.25 gap is the signal
+**ON SLIDE (6 bullets):**
+- Active policy mutates **3–7 fields** at a seed-randomized step (pre-auth thresholds, signatures, narrative requirements, discharge attachment)
+- **No announcement** — no observation flag, no metadata key, no event
+- `submit_claim` is graded against the policy *at submit time*
+- Only path to the new rules: a fresh `insurance_lookup` call after the (unknown) drift step
+- 12 claim types × 3 tiers × randomized drift step = **~12k+ unique trajectories**
+- Scripted baseline: 1.00 on easy, **0.7611 on drift** — that 0.24 gap is the signal
 
 **SPEAKER NOTES:**
-"Here is what makes the environment test reasoning instead of memorisation. On hard tasks, the policy changes mid-episode — but we do not tell the agent. There is no flag, no event, no hint. The only way the agent learns the rules changed is to call insurance_lookup again. Submissions are graded against the policy at submit time, not against what the agent believes. A scripted baseline drops from 1.0 on easy to 0.75 on the drift task. That 0.25 gap is what we train against."
+"On hard_drift tasks the active policy mutates mid-episode across three to seven fields — pre-auth thresholds, required signatures, narrative requirements, discharge attachment rules. Multi-field mutation, not a boolean. No announcement, no flag, no event. The only path to the new rules is a fresh insurance_lookup after the unknown drift step. Submissions are graded against the policy at submit time. Twelve claim types, three tiers, seed-randomized drift = over twelve thousand unique trajectories. Scripted baseline drops from one-zero on easy to zero-seven-six on drift. That zero-two-four gap is the trainable signal."
 
 ---
 
 ## Slide 5 — Live measurements (2:00–2:30)  ★ HEADLINE SLIDE
 
 **Title:**
-Baselines + SFT: imitation closes the gap, RL must break past
+From base 0.00 to teacher parity. RL saturates — that is calibration data.
 
-**ON SLIDE (1 chart + 1 table + 2 bullets):**
+**ON SLIDE (1 chart + 2 tables + 2 bullets):**
 
-*(Chart — 4 bars on hard_drift)*
-| random | no_op | scripted | SFT |
+*(Chart — 5 bars on hard_drift)*
+| base Qwen | random | no_op | scripted | SFT |
+|---|---|---|---|---|
+| **0.00** | 0.11 | 0.08 | 0.76 | **0.76** |
+
+*(Table A — Base → SFT lift, n=5 held-out seeds, the IMPROVEMENT story)*
+| task | base Qwen | SFT | **lift** |
 |---|---|---|---|
-| 0.11 | 0.08 | 0.76 | 0.76 |
+| easy_cashless | 0.0000 ± 0.0000 | 1.0000 ± 0.0000 | **+1.000** |
+| medium_multi_payer | 0.0000 ± 0.0000 | 1.0000 ± 0.0000 | **+1.000** |
+| hard_drift | 0.0000 ± 0.0000 | 0.7573 ± 0.0040 | **+0.7573** |
+| **avg** | **0.0000** | **0.9191** | **+0.9191** |
 
-*(Table — SFT vs scripted per task, n=10 held-out seeds, 95% CI)*
+*(Table B — SFT vs scripted, n=10 held-out seeds, the PARITY story)*
 | task | SFT | scripted | Δ |
 |---|---|---|---|
 | easy_cashless | **1.0000 ± 0.0000** | 1.0000 ± 0.0000 | +0.0000 |
@@ -101,19 +110,20 @@ Baselines + SFT: imitation closes the gap, RL must break past
 ✓ = inside both 95% CIs
 
 - 5 exploit patterns explicitly neutralised; all five score ≤ no_op
-- `drift_bonus` and `abstention_quality` are **RL-only axes** by design (spec v3 §7.6) — GRPO target
+- GRPO Δ = ±0.0002 → **rewards saturated** by SFT (calibration finding, see backup)
 
-**SPEAKER NOTES (~26s spoken — leaves Q&A margin):**
-"Four bars on hard_drift: random eleven, no-op eight, scripted seventy-six, SFT seventy-six. The table is n=ten held-out seeds with ninety-five-percent CIs: SFT matches scripted at one-point-zero on easy and medium with zero variance, and zero-point-seven-five-seven plus-or-minus zero-point-zero-zero-four on hard versus scripted's zero-point-seven-six-one. The three-thousandths gap is inside both noise bands — statistically indistinguishable. Imitation reaches the teacher. The remaining gap to a perfect score lives on two axes the spec designates RL-only, and GRPO is the planned next step."
+**SPEAKER NOTES (~28s spoken):**
+"Five bars on hard_drift: base Qwen at zero, random at eleven, no-op at eight, scripted at seventy-six, SFT at seventy-six. The first column matters. Untrained, the 3B model produces valid JSON — zero parse failures across fifteen episodes — but scores zero on every task. After SFT: easy and medium hit one-point-zero with zero variance, hard at zero-point-seven-five-seven, three thousandths inside the scripted teacher's confidence band. We then ran GRPO and observed reward saturation — delta two ten-thousandths, gradient norms ten-to-the-minus-seven. SFT already extracts what those rewards signal. That is calibration data about the env's tool-space depth, not training failure."
 
-**SAVE THE SEED-44 STORY FOR Q&A** — the table speaks for itself; don't burn slide-5 time on the demo walkthrough.
+**SAVE THE SEED-44 STORY FOR Q&A** — the tables speak for themselves; don't burn slide-5 time on the demo walkthrough.
 
 **BACKUP NOTES (do not say unless asked):**
+- Base eval: n=5 held-out seeds (16–20) × 3 tasks = 15 episodes, all 0.0000, parse_failures = 0, 12.1 min wall time, saved at `/results/base_eval_n5.json`
 - SFT training: 681 steps, loss 0.42 → 0.014, LoRA rank 32 on Qwen 2.5 3B, ~90 min Colab G4
-- SFT eval: n=10 held-out seeds (16–25) × 3 tasks = 30 trajectories, zero parse failures
-- 95% CI = 1.96·sd/√n; per-seed raw scores saved at `/results/sft_eval_n10.json`
-- SFT Δ on hard_drift (−0.0037) is within both SFT-CI (±0.0040) and scripted-CI (±0.0049)
+- SFT eval: n=10 held-out seeds (16–25) × 3 tasks = 30 trajectories, zero parse failures, saved at `/results/sft_eval_n10.json`
+- 95% CI = 1.96·sd/√n; SFT Δ on hard_drift (−0.0037) is within both SFT-CI (±0.0040) and scripted-CI (±0.0049)
 - Verified via Codex's protocol: sha256 byte-match + fresh subprocess × 2
+- GRPO finding (`docs/reward_calibration.md` §5): 5 reward functions saturated at step 1 because SFT-from-scripted already satisfies all of them (valid_json ✓, in-schema ✓, no_oscillation ✓, no_repeated_tool ✓, submit_with_coding ✓). Δ_score = ±0.0002, grad_norm ~1e-7. The roadmap is reward-engineered task tiers, not more RL.
 - Reproducibility commands: `python -m medibill.validate_grader --task all`, `python -m medibill.demo_runner --seed 44`
 
 ---

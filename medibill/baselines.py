@@ -262,6 +262,197 @@ class ScriptedHeuristicPolicy:
 
 
 # ---------------------------------------------------------------------------
+# Scripted++  (drift-aware, ambiguity-aware) — used for SFT v2 trace generation
+# ---------------------------------------------------------------------------
+
+
+class ScriptedDriftAwarePolicy:
+    """Scripted heuristic with three improvements over ``ScriptedHeuristicPolicy``.
+
+    1. **Escalate ambiguous cells** before coding — earns abstention_quality
+       (weight 0.15) and avoids the per-cell wrong_fix_ambiguous penalty (-0.08).
+       Reads ``env.state.ambiguous_cells`` (privileged) for trace generation.
+    2. **Fresh insurance_lookup before each submit** — earns drift_bonus
+       (weight 0.05) and surfaces post-drift policy changes per claim.
+    3. **Drift detection via rule comparison** — when a lookup returns a new
+       ``policy_version`` different from the cached one, restart the coding
+       phase for all unsubmitted claims so they submit under the new policy.
+
+    Used to generate higher-quality SFT data on hard_drift. The SFT-distilled
+    student learns the action sequence; ambiguity must therefore be derivable
+    from the observation context (dirty-state cell shape) at training time.
+    """
+
+    _PHASES = (
+        "ehr",
+        "escalate",
+        "set_version",
+        "set_preauth_flag",
+        "set_preauth_number",
+        "set_signatures",
+        "set_summary",
+        "set_narrative",
+        "pre_submit_lookup",
+        "submit",
+    )
+
+    def __init__(self) -> None:
+        self._looked_up: bool = False
+        self._rules_cache: dict | None = None
+        self._phase: dict[str, str] = {}
+        self._escalated_cells: set[tuple[str, str]] = set()
+
+    def _advance(self, cid: str) -> str:
+        cur = self._phase.get(cid, "ehr")
+        idx = self._PHASES.index(cur)
+        nxt = self._PHASES[min(idx + 1, len(self._PHASES) - 1)]
+        self._phase[cid] = nxt
+        return nxt
+
+    def __call__(
+        self,
+        obs: MediBillObservation,
+        env: MediBillEnvironment,
+        rng: random.Random,
+    ) -> MediBillAction:
+        # --- Ingest insurance_lookup result, detect drift -----------------
+        if (
+            obs.last_tool_result
+            and obs.last_tool_result.tool == "insurance_lookup"
+            and obs.last_tool_result.status == "success"
+        ):
+            new_rules = obs.last_tool_result.payload.get("rules")
+            if isinstance(new_rules, dict):
+                drift_detected = (
+                    self._rules_cache is not None
+                    and new_rules.get("policy_version")
+                    != self._rules_cache.get("policy_version")
+                )
+                if drift_detected:
+                    submitted_ids = {
+                        c.claim_id for c in (obs.claims or []) if c.submitted
+                    }
+                    for cid in list(self._phase.keys()):
+                        if cid not in submitted_ids:
+                            self._phase[cid] = "set_version"
+                self._rules_cache = new_rules
+
+        # --- Initial lookup ----------------------------------------------
+        if not self._looked_up:
+            self._looked_up = True
+            return MediBillAction(
+                action_type="insurance_lookup",
+                params={"provider": _provider_from_obs(obs)},
+            )
+
+        if self._rules_cache is None:
+            return MediBillAction(
+                action_type="insurance_lookup",
+                params={"provider": _provider_from_obs(obs)},
+            )
+
+        remaining = [c for c in obs.claims if not c.submitted]
+        if not remaining:
+            return MediBillAction(
+                action_type="insurance_lookup",
+                params={"provider": _provider_from_obs(obs)},
+            )
+
+        claim = remaining[0]
+        cid = claim.claim_id
+
+        # --- Privileged: ambiguous cells for this claim's entity ----------
+        eid = ""
+        for c in env.state.claims:
+            if c.get("claim_id") == cid:
+                eid = c.get("_entity_id", "") or ""
+                break
+        ambig_fields_for_claim = {
+            field
+            for (amb_eid, field) in env.state.ambiguous_cells
+            if amb_eid == eid
+        }
+
+        # --- Cached policy values for coding ------------------------------
+        amount = claim.amount_billed_inr or 0
+        threshold = self._rules_cache.get("pre_auth_threshold_inr", 0)
+        flag = amount >= threshold
+        provider = _provider_from_obs(obs)
+        narrative = (
+            f"Patient presented with clinical findings consistent with "
+            f"{claim.diagnosis_code or 'UNKNOWN'}. Inpatient evaluation "
+            f"and management performed per standard protocol."
+            if self._rules_cache.get("requires_diagnosis_narrative")
+            else ""
+        )
+        coding_specs: dict[str, tuple[str, object]] = {
+            "set_version":        ("policy_version",  self._rules_cache.get("policy_version", "")),
+            "set_preauth_flag":   ("pre_auth_flag",   flag),
+            "set_preauth_number": ("pre_auth_number", f"PA-{provider}-{cid.rsplit('-', 1)[-1]}" if flag else None),
+            "set_signatures":     ("required_signatures", list(self._rules_cache.get("required_signatures", []))),
+            "set_summary":        ("discharge_summary_attached", bool(self._rules_cache.get("requires_discharge_summary", False))),
+            "set_narrative":      ("diagnosis_narrative", narrative),
+        }
+
+        # --- Phase-driven action selection (loop to skip escalated fields) -
+        for _ in range(len(self._PHASES) + 2):  # bounded for safety
+            phase = self._phase.get(cid, "ehr")
+
+            if phase == "ehr":
+                self._advance(cid)
+                return MediBillAction(
+                    action_type="ehr_query",
+                    params={"claim_id": cid},
+                )
+
+            if phase == "escalate":
+                for amb_field in sorted(ambig_fields_for_claim):
+                    if (cid, amb_field) not in self._escalated_cells:
+                        self._escalated_cells.add((cid, amb_field))
+                        return MediBillAction(
+                            action_type="escalate_to_human",
+                            params={
+                                "claim_id": cid,
+                                "field": amb_field,
+                                "reason": "ambiguous",
+                            },
+                        )
+                self._advance(cid)
+                continue
+
+            if phase in coding_specs:
+                field, value = coding_specs[phase]
+                self._advance(cid)
+                if (cid, field) in self._escalated_cells:
+                    # We escalated this cell — do not write it. Try next phase.
+                    continue
+                return MediBillAction(
+                    action_type="coding_engine",
+                    params={"claim_id": cid, "field": field, "value": value},
+                )
+
+            if phase == "pre_submit_lookup":
+                self._advance(cid)
+                return MediBillAction(
+                    action_type="insurance_lookup",
+                    params={"provider": provider},
+                )
+
+            # submit
+            self._phase[cid] = "done"
+            return MediBillAction(
+                action_type="submit_claim",
+                params={"claim_id": cid},
+            )
+
+        # Fallback: shouldn't reach here. Safe action.
+        return MediBillAction(
+            action_type="insurance_lookup",
+            params={"provider": _provider_from_obs(obs)},
+        )
+
+
+# ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 

@@ -30,7 +30,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-from medibill.baselines import ScriptedHeuristicPolicy, no_op_agent, random_agent
+from medibill.baselines import (
+    ScriptedDriftAwarePolicy,
+    ScriptedHeuristicPolicy,
+    no_op_agent,
+    random_agent,
+)
 from medibill.models import MediBillAction, MediBillObservation
 from medibill.prompting import PROMPT_VERSION, SYSTEM_PROMPT, format_observation
 from medibill.server.environment import MediBillEnvironment
@@ -42,9 +47,10 @@ TASKS_ALL = ("easy_cashless", "medium_multi_payer", "hard_drift")
 # Policy registry — name -> zero-arg factory returning a callable
 # ``agent(obs, env, rng) -> MediBillAction``.
 POLICIES: Dict[str, Any] = {
-    "scripted_heuristic": ScriptedHeuristicPolicy,
-    "no_op":              lambda: no_op_agent,
-    "random":             lambda: random_agent,
+    "scripted_heuristic":  ScriptedHeuristicPolicy,
+    "scripted_drift_aware": ScriptedDriftAwarePolicy,
+    "no_op":                lambda: no_op_agent,
+    "random":               lambda: random_agent,
 }
 
 
