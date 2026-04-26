@@ -101,7 +101,40 @@ flowchart LR
 - **Documentation:** `docs/round2-spec-v3.md` (design), `docs/colab_recipe.md`
   (paste-ready Colab runbook)
 
-## Headline result — three baselines, one drift gap
+## Headline training result — base → SFT, the imitation gap closes
+
+**Base Qwen 2.5 3B (untrained) vs. SFT-fine-tuned adapter, n=5 held-out seeds (16-20):**
+
+| Task | Base Qwen 2.5 3B | **SFT (LoRA r=32)** | Lift |
+|---|---|---|---|
+| `easy_cashless` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
+| `medium_multi_payer` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
+| `hard_drift` | 0.0000 ± 0.0000 | **0.7573 ± 0.0040** | **+0.7573** |
+| **average** | **0.0000** | **0.9191** | **+0.9191** |
+
+The base model produces valid JSON tool calls (parse_failures = 0/15) — it just has no policy reasoning. SFT on scripted-teacher trajectories teaches both format AND policy, lifting the model from literally zero to within statistical noise of the teacher on every tier.
+
+### SFT vs. scripted teacher — n=10 held-out seeds, 95% CI (parity story)
+
+| Task | SFT (n=10) | Scripted (n=10) | Δ |
+|---|---|---|---|
+| `easy_cashless` | 1.0000 ± 0.0000 | 1.0000 ± 0.0000 | +0.0000 |
+| `medium_multi_payer` | 1.0000 ± 0.0000 | 1.0000 ± 0.0000 | +0.0000 |
+| `hard_drift` | **0.7573 ± 0.0040** | 0.7611 ± 0.0049 | −0.0037 ✓ inside both 95% CIs |
+
+SFT matches the scripted teacher to within statistical noise on every tier. Verified via Codex's reproducibility protocol: sha256 byte-match of adapter weights + fresh-subprocess re-eval × 2 (`/results/sft_eval_n10.json`).
+
+### GRPO saturation — a calibration finding, not a failure
+
+We followed SFT with a 5-reward GRPO run targeting the grader's penalty structure (`reward_no_oscillation`, `reward_no_repeated_tool`, `reward_submit_with_coding`, `reward_valid_json`, `reward_action_in_schema`).
+
+**Result:** Δ_score = ±0.0002, gradient norm ~1e-7. **The rewards saturated at step 1** because SFT-from-scripted-traces already satisfies all five reward signals. This is calibration data about the env's tool-space depth, not training failure — see [`docs/reward_calibration.md`](docs/reward_calibration.md) §5 for full analysis.
+
+The finding informs the next task tier design: reward-engineered tiers (where the optimal trajectory is *not* in the scripted-teacher distribution) are the path to RL headroom, not more reward shaping over the existing distribution.
+
+---
+
+## Baseline separation — three reference policies, one drift gap
 
 ![MediBill-Env baselines: random / no_op / scripted across the three task tiers, n=20 seeds each, with the 0.25 drift acceptance gap on hard_drift highlighted in red](docs/img/baselines.png)
 
