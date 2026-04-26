@@ -18,7 +18,13 @@ tags:
 > insurer's billing policy *silently changed mid-task* and re-query the rules
 > before submitting a claim against stale state.
 
+**🚀 Live deployment:** [huggingface.co/spaces/Anuj424614/medibill-env](https://huggingface.co/spaces/Anuj424614/medibill-env) · API: `https://anuj424614-medibill-env.hf.space` · `/health` ✓
+
 **📖 Full write-up:** [Teaching an LLM Agent That Its World Just Changed](https://gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37) — the blog post explains the regulatory clock, the silent-drift mechanic, the 0.25 drift acceptance gap, and why two of six rubric axes are RL-only by design.
+
+**🧪 Reproduce the training in Colab:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Algoace1403/METAHackthon2026/blob/main/notebooks/sft_quickstart.ipynb) — one-click run of the full SFT pipeline against the live HF Space environment.
+
+**The 30-second story.** A medical coder in India has 180 minutes to close every cashless claim. Star Health, ICICI Lombard, and HDFC ERGO push policy updates between shifts — codes get renamed, pre-auth thresholds move, signature requirements appear without an announcement. A coder who memorised yesterday's rules submits under yesterday's rules and watches the claim bounce. Last year, ₹26,000 crore of claims got rejected this way. **MediBill-Env puts an LLM agent into that exact seat. The active policy mutates mid-episode without a flag, an event, or a hint — and the only way the agent ever learns is to call `insurance_lookup` again.** That's the test. Below: the env, the grader, the 5-attack exploit gate that keeps it honest, and the SFT pipeline that closes the gap from `0.0000` to `0.9996` on hard_drift.
 
 OpenEnv environment where an LLM agent closes cashless Indian health-insurance
 claims inside the IRDAI-mandated 3-hour clock while the insurer's policy
@@ -101,36 +107,51 @@ flowchart LR
 - **Documentation:** `docs/round2-spec-v3.md` (design), `docs/colab_recipe.md`
   (paste-ready Colab runbook)
 
-## Headline training result — base → SFT, the imitation gap closes
+## Headline training result — Base → SFT v2, near-perfect on every tier
 
-**Base Qwen 2.5 3B (untrained) vs. SFT-fine-tuned adapter, n=5 held-out seeds (16-20):**
+![Three-checkpoint training progression on hard_drift: Base 0.0000 → SFT v1 0.7573 → GRPO saturated → SFT v2 0.9996](docs/img/base_vs_sft.png)
 
-| Task | Base Qwen 2.5 3B | **SFT (LoRA r=32)** | Lift |
+![Per-task lift across all 3 tiers: average +0.9999 from base Qwen to SFT v2](docs/img/improvement_per_task.png)
+
+**Base Qwen 2.5 3B (untrained) vs. final SFT v2 adapter, n=5 held-out seeds (16-20):**
+
+| Task | Base Qwen 2.5 3B | **SFT v2 (LoRA r=32)** | Lift |
 |---|---|---|---|
 | `easy_cashless` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
 | `medium_multi_payer` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
-| `hard_drift` | 0.0000 ± 0.0000 | **0.7573 ± 0.0040** | **+0.7573** |
-| **average** | **0.0000** | **0.9191** | **+0.9191** |
+| `hard_drift` | 0.0000 ± 0.0000 | **0.9996 ± 0.0008** | **+0.9996** |
+| **average** | **0.0000** | **0.9999** | **+0.9999** |
 
-The base model produces valid JSON tool calls (parse_failures = 0/15) — it just has no policy reasoning. SFT on scripted-teacher trajectories teaches both format AND policy, lifting the model from literally zero to within statistical noise of the teacher on every tier.
+The base model produces valid JSON tool calls (parse_failures = 0/15) — it just has no policy reasoning. SFT v2 distils from a drift-aware teacher (`ScriptedDriftAwarePolicy`) and lifts the model from literal zero to **0.9996 on hard_drift**, with zero regression on easy/medium. Fifteen episodes, zero parse failures.
 
-### SFT vs. scripted teacher — n=10 held-out seeds, 95% CI (parity story)
+### Iteration story — three checkpoints
 
-| Task | SFT (n=10) | Scripted (n=10) | Δ |
+| Checkpoint | hard_drift score | Source | What changed |
+|---|---|---|---|
+| Base Qwen 2.5 3B | 0.0000 | untrained | — |
+| SFT v1 | 0.7573 | scripted teacher (`ScriptedHeuristicPolicy`) | imitates baseline scripted, matches teacher's structural ceiling |
+| GRPO over SFT v1 | 0.7575 (Δ±0.0002) | 5-reward single-step GRPO | rewards saturated by SFT (calibration finding) |
+| **SFT v2** | **0.9996** | drift-aware teacher (`ScriptedDriftAwarePolicy`) | teacher escalates ambiguous cells + fresh `insurance_lookup` pre-submit |
+
+The pivot was teacher engineering, not RL. We diagnosed that GRPO saturated because SFT v1 already extracted everything the 5 reward functions could express. Rather than shaping more rewards over the same distribution, we built a stronger teacher — one that explicitly addresses the two RL-only axes (`abstention_quality`, `drift_bonus`) — and re-distilled.
+
+### SFT v1 vs. scripted teacher — n=10 held-out seeds, 95% CI (parity baseline kept for reference)
+
+| Task | SFT v1 (n=10) | Scripted (n=10) | Δ |
 |---|---|---|---|
 | `easy_cashless` | 1.0000 ± 0.0000 | 1.0000 ± 0.0000 | +0.0000 |
 | `medium_multi_payer` | 1.0000 ± 0.0000 | 1.0000 ± 0.0000 | +0.0000 |
-| `hard_drift` | **0.7573 ± 0.0040** | 0.7611 ± 0.0049 | −0.0037 ✓ inside both 95% CIs |
+| `hard_drift` | 0.7573 ± 0.0040 | 0.7611 ± 0.0049 | −0.0037 ✓ inside both 95% CIs |
 
-SFT matches the scripted teacher to within statistical noise on every tier. Verified via Codex's reproducibility protocol: sha256 byte-match of adapter weights + fresh-subprocess re-eval × 2 (`/results/sft_eval_n10.json`).
+SFT v1 matches the baseline scripted teacher to within statistical noise on every tier (parity proof). The +0.2423 lift in SFT v2 is purely a **teacher upgrade**, not an SFT-pipeline change. Verified via Codex's reproducibility protocol: sha256 byte-match of adapter weights + fresh-subprocess re-eval × 2.
 
 ### GRPO saturation — a calibration finding, not a failure
 
-We followed SFT with a 5-reward GRPO run targeting the grader's penalty structure (`reward_no_oscillation`, `reward_no_repeated_tool`, `reward_submit_with_coding`, `reward_valid_json`, `reward_action_in_schema`).
+We followed SFT v1 with a 5-reward GRPO run targeting the grader's penalty structure (`reward_no_oscillation`, `reward_no_repeated_tool`, `reward_submit_with_coding`, `reward_valid_json`, `reward_action_in_schema`).
 
-**Result:** Δ_score = ±0.0002, gradient norm ~1e-7. **The rewards saturated at step 1** because SFT-from-scripted-traces already satisfies all five reward signals. This is calibration data about the env's tool-space depth, not training failure — see [`docs/reward_calibration.md`](docs/reward_calibration.md) §5 for full analysis.
+**Result:** Δ_score = ±0.0002, gradient norm ~1e-7. **The rewards saturated at step 1** because SFT-from-scripted-traces already satisfies all five reward signals. This is calibration data about the env's tool-space depth, not training failure — see [`docs/reward_calibration.md`](docs/reward_calibration.md) §5 and [`docs/findings.md`](docs/findings.md) Finding 3 for full analysis.
 
-The finding informs the next task tier design: reward-engineered tiers (where the optimal trajectory is *not* in the scripted-teacher distribution) are the path to RL headroom, not more reward shaping over the existing distribution.
+The finding directly motivated the SFT v2 teacher upgrade: instead of shaping more rewards over the saturated distribution, escape the distribution by improving the teacher. **+0.2423 lift on hard_drift in 90 trajectories of new data + 33 minutes of retraining.**
 
 ---
 
@@ -175,11 +196,17 @@ The narrated demo run lands at composite score **0.753** on seed 44: drift fires
 | Demo video recording script | [`docs/video_recording_script.md`](docs/video_recording_script.md) |
 | Discord submission post template | [`docs/discord_submission.md`](docs/discord_submission.md) |
 | Colab SFT runbook | [`docs/colab_recipe.md`](docs/colab_recipe.md) |
-| Colab quick-start notebook | [`notebooks/sft_quickstart.ipynb`](notebooks/sft_quickstart.ipynb) |
+| Colab quick-start notebook | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Algoace1403/METAHackthon2026/blob/main/notebooks/sft_quickstart.ipynb) [`notebooks/sft_quickstart.ipynb`](notebooks/sft_quickstart.ipynb) |
+| Slide deck (PDF) | [`docs/medibill_pitch.pdf`](docs/medibill_pitch.pdf) |
+| Slide deck (PowerPoint) | [`docs/medibill_pitch_v2.pptx`](docs/medibill_pitch_v2.pptx) |
+| Training improvement chart | [`docs/img/base_vs_sft.png`](docs/img/base_vs_sft.png) |
+| Per-task lift chart | [`docs/img/improvement_per_task.png`](docs/img/improvement_per_task.png) |
+| OpenEnv manifest | [`openenv.yaml`](openenv.yaml) |
 | HF Space deployment guide | [`docs/hf_space_push.md`](docs/hf_space_push.md) |
 | Baseline reproducibility CSV (180 rows) | [`docs/baseline_reproducibility.csv`](docs/baseline_reproducibility.csv) |
 | Demo video | *See [`docs/video_recording_script.md`](docs/video_recording_script.md); link in Discord post once recorded* |
-| HuggingFace Space | *Deploy via [`docs/hf_space_push.md`](docs/hf_space_push.md); link in Discord post once live* |
+| **HuggingFace Space (LIVE)** | **https://huggingface.co/spaces/Anuj424614/medibill-env** — `/health` returns `{"status":"healthy"}` |
+| HF Space API endpoint | `https://anuj424614-medibill-env.hf.space` |
 
 
 ## License + Citation

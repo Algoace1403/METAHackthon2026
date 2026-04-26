@@ -1,6 +1,121 @@
 spec_version: 1
 name: medibill
+version: 1.0.0
+description: >-
+  An OpenEnv environment for India's cashless health-claim workflow. An LLM
+  agent processes 6–12 claims under IRDAI's 3-hour clock while the insurer's
+  policy silently mutates mid-episode. The agent's only path to the new rules
+  is a fresh insurance_lookup call — submissions are graded against the policy
+  active at submit time. Tests reasoning under unannounced state change.
+
+# Deployment
 type: space
 runtime: fastapi
 app: medibill.server.app:app
 port: 8000
+space: Anuj424614/medibill-env
+
+# Theme classification (Round 2)
+theme: "3.1"
+theme_name: World Modeling — Professional Tasks
+
+# Task tiers exposed by reset(seed, task_id)
+tasks:
+  - id: easy_cashless
+    description: 6 cashless CGHS claims under a static policy. Tests baseline tool fidelity.
+    drift: false
+    n_claims: 6
+    provider: cghs_v2024_1
+  - id: medium_multi_payer
+    description: 10 claims under Star Health v1.4 with provider-specific quirks. No drift.
+    drift: false
+    n_claims: 10
+    provider: star_v1_4
+  - id: hard_drift
+    description: 12 claims with a silent policy mutation at a seed-randomized step in [10, 40). Submissions graded against policy at submit time.
+    drift: true
+    n_claims: 12
+    provider: star_v1_3_to_1_4
+
+# Tools available to the agent (5 + 2 meta)
+tools:
+  - name: ehr_query
+    purpose: Read a patient record (diagnoses, dates, attachments, demographics)
+  - name: insurance_lookup
+    purpose: Fetch the insurer's currently-active policy rules. The ONLY way to detect drift.
+  - name: coding_engine
+    purpose: Write a policy-sensitive field (diagnosis code, pre-auth flag, narrative)
+  - name: escalate_to_human
+    purpose: Calibrated abstention on ambiguous cells
+  - name: submit_claim
+    purpose: Lock a claim for grading. Graded against policy at submit time.
+
+# Grader / rubric
+grader:
+  module: medibill.server.grader
+  class: MediBillGrader
+  type: deterministic
+  deterministic_partition: true   # IDENTITY_FIELDS ∩ POLICY_SENSITIVE_FIELDS == ∅ (asserted at import)
+  axes:
+    - name: final_correctness
+      weight: 0.45
+      description: Identity fields match ground truth
+    - name: policy_compliance
+      weight: 0.20
+      description: Policy-sensitive fields correct under policy at submit time
+    - name: abstention_quality
+      weight: 0.15
+      description: Calibrated escalation on ambiguous cells (RL-only target)
+    - name: process_auditability
+      weight: 0.10
+      description: Tool-call order patterns
+    - name: efficiency
+      weight: 0.05
+      description: Budget used vs allocation, gated on correctness
+    - name: drift_bonus
+      weight: 0.05
+      description: Gated on post-drift re-query + final correctness (RL-only target)
+  penalty_cap: 0.50
+  bonus_cap: 0.15
+
+# Exploit gate (5 attack policies must score ≤ no_op + 1e-3)
+exploit_gate:
+  test_module: medibill.test_exploits
+  attacks:
+    - ack_spammer
+    - escalate_everything
+    - oscillator
+    - double_count
+    - periodic_lookup
+  enforced_in: ci
+
+# Training pipeline
+training:
+  framework: huggingface_trl
+  base_model: Qwen/Qwen2.5-3B-Instruct
+  technique: SFT_with_LoRA
+  lora_rank: 32
+  lora_alpha: 64
+  efficiency_layer: unsloth
+  notebook: notebooks/sft_quickstart.ipynb
+  trajectories: traces/all_seeds_0_15.jsonl
+  eval: traces/eval.jsonl
+
+# Headline result (n=5 held-out seeds, hard_drift)
+results:
+  base_score: 0.0000
+  sft_v1_score: 0.7573
+  grpo_score: 0.7575
+  sft_v2_score: 0.9996
+  average_lift_base_to_sft_v2: 0.9999
+  parse_failures: 0
+  episodes: 15
+
+# Repository / additional materials
+repository: https://github.com/Algoace1403/METAHackthon2026
+materials:
+  blog: https://gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37
+  deck: docs/medibill_pitch.pdf
+  spec: docs/round2-spec-v3.md
+  findings: docs/findings.md
+  reward_calibration: docs/reward_calibration.md
