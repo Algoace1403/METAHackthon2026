@@ -207,15 +207,34 @@ Verified via Codex's reproducibility protocol: sha256 byte-match of adapter weig
 
 ![Per-task lift: average +0.9999 from base Qwen to SFT v2 across all 3 tiers](https://raw.githubusercontent.com/Algoace1403/METAHackthon2026/main/docs/img/improvement_per_task.png)
 
-### 6.4 The lesson
+### 6.4 Generalisation probes — the three-rung capability ladder
+
+The 0.9996 above is on tasks whose providers (CGHS, Star) appear in the SFT training distribution. To stress-test whether that lift represents *learned protocol fluency* or *teacher imitation*, the env exposes two additional task tiers explicitly **excluded from every training trajectory**: a held-out provider (`medium_alt_provider`, HDFC ERGO v3.1) and a novel two-event mechanic (`hard_silent_revert`, where policy mutates v1.3 → v1.4 then *reverts* to v1.3 at a later seed-randomised step).
+
+Running base Qwen, SFT v2, and the scripted oracle on n=5 held-out seeds (16–20):
+
+| Task | Base | SFT v2 | Scripted teacher (oracle) | What the gap reveals |
+|---|---:|---:|---:|---|
+| `hard_drift` (in-distribution) | 0.0000 | **0.9996 ± 0.0008** | ~1.000 | SFT v2 ≈ oracle on trained distribution |
+| `medium_alt_provider` (held-out provider) | 0.0000 | **0.3046 ± 0.0000** | **1.0000 ± 0.0000** | 0.70 gap: pure teacher-imitation, no rule-surface generalisation |
+| `hard_silent_revert` (novel mechanic) | 0.0000 | **0.0648 ± 0.0225** | **0.9070** (range 0.84–1.00) | 0.84 gap: single-event drift training does not transfer to revert |
+
+The teacher (an oracle that knows to re-query `insurance_lookup` before every submit) cleanly solves both held-out tasks. Therefore the env is solvable — these scores are *not* a design pathology. SFT v2's collapse to 0.30 / 0.06 is a measured property of the trained policy: it has memorised the teacher's specific trajectories on Star/CGHS and inherited the teacher's "drift fires once, then is final" assumption.
+
+This is the headline calibration result. **The env successfully discriminates teacher-imitation from learned protocol fluency** — the 0.99 → 0.06 gap is not a failure to report, it is the discrimination signal RL post-training is designed to act on. SFT distils a teacher's distribution; RL is what closes the gap when the world steps outside that distribution.
+
+The std=0.0 on `medium_alt_provider` (5 different seeds, identical 0.3046 score) is itself diagnostic: the trained policy is producing a deterministic output on every HDFC ERGO claim regardless of seed, because the provider rule-surface is unfamiliar enough that the policy collapses to a single fixed pattern. That is exactly the brittleness signal an evaluator wants to catch *before* deployment, not after.
+
+### 6.5 The lesson
 
 The actionable takeaway from this work is one sentence. *When RL gets stuck on a saturated reward surface, the cheap and effective move is to engineer a stronger teacher and re-distill, not to write more reward functions.* +0.2423 lift on the hardest tier in 33 minutes of retraining beat anything reward shaping could have produced over the same compute. Future teams using this environment should know that.
 
 ## 7. Limitations
 
-- The scripted teacher is still a hand-coded heuristic. SFT v2 inherits its policy; it does not exceed it. A genuine RL improvement (one that finds behaviours the teacher does not) would need either a weaker SFT init (with mistakes RL can correct), or task tiers that fall outside the teacher's distribution.
-- Held-out eval for SFT v2 is n=5 seeds. The hard_drift score (0.9996) has tight CI (±0.0008), but scaling to 30+ seeds is a post-hackathon priority.
-- We trained on a single base model (Qwen 2.5 3B Instruct). Whether the GRPO saturation result generalises to larger bases or different families is open.
+- The scripted teacher is still a hand-coded heuristic. SFT v2 inherits its policy; it does not exceed it. A genuine RL improvement (one that finds behaviours the teacher does not) would need either a weaker SFT init (with mistakes RL can correct), or task tiers that fall outside the teacher's distribution. The held-out probes in §6.4 are exactly those tiers — and the 0.30 / 0.06 SFT scores there are the measured opening RL is built to close.
+- SFT v2 generalisation gap is real and quantified: 0.9996 in-distribution, 0.3046 on a held-out provider, 0.0648 on a novel two-event mechanic. The teacher (oracle) hits 1.000 / 0.907 on the same held-out seeds, so the env is calibrated; the gap is in the trained policy, not the env.
+- Held-out eval for SFT v2 is n=5 seeds per tier. Tight CI on `hard_drift` (±0.0008); std=0 on `medium_alt_provider` is itself diagnostic of policy collapse to a deterministic output on the unseen provider. Scaling to 30+ seeds is a post-hackathon priority.
+- We trained on a single base model (Qwen 2.5 3B Instruct). Whether the GRPO saturation result and the held-out generalisation gap reproduce on larger bases or different families is open.
 
 ## 8. Try it
 

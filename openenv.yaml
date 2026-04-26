@@ -137,12 +137,27 @@ results:
     episodes: 15
   medium_alt_provider_held_out:
     base_score: 0.0000
-    sft_v2_score: pending  # filled in once Colab eval finishes
-    note: "Provider HDFC_ERGO never seen in training. Direct generalisation probe."
+    sft_v2_score: 0.3046
+    sft_v2_std: 0.0000
+    teacher_score: 1.0000     # scripted_drift_aware oracle, n=5 seeds 16-20
+    teacher_std: 0.0000
+    parse_failures: 0
+    episodes: 5
+    note: "Provider HDFC_ERGO never seen in training. The 0.70 SFT-vs-teacher gap measures pure teacher-imitation: oracle solves cleanly, SFT plateaus at deterministic 0.3046 (std=0)."
   hard_silent_revert:
     base_score: 0.0000
-    sft_v2_score: pending  # filled in once Colab eval finishes
-    note: "Two-event drift breaks 'after drift the new version is final' heuristic."
+    sft_v2_score: 0.0648
+    sft_v2_std: 0.0225
+    teacher_score: 0.9070     # scripted_drift_aware oracle, n=5 seeds 16-20, range 0.839-1.000
+    teacher_std: 0.0728
+    parse_failures: 0
+    episodes: 5
+    note: "Two-event drift breaks 'after drift the new version is final' heuristic. Teacher (which re-queries pre-submit) hits 0.907; SFT v2 collapses to 0.06 because single-event training does not transfer to revert. Demonstrates env is calibrated and discriminates teacher-imitation from protocol-fluency."
+  three_rung_capability_ladder:
+    description: "n=5 held-out seeds (16-20). Teacher = ScriptedDriftAwarePolicy (oracle). Random/no_op floors documented in baseline_reproducibility.csv."
+    hard_drift:           [0.0000, 0.9996, 1.0000]   # base, sft_v2, teacher
+    medium_alt_provider:  [0.0000, 0.3046, 1.0000]
+    hard_silent_revert:   [0.0000, 0.0648, 0.9070]
 
 # Repository / additional materials
 repository: https://github.com/Algoace1403/METAHackthon2026

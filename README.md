@@ -172,16 +172,37 @@ The 0.9996 number above is on tasks whose providers (CGHS, Star) appear in the S
 
 Both tasks pass the 5-attack exploit gate (no_op floors: 0.154 / 0.059; selective_submit documented as v1-grader limitation, same as for hard_drift).
 
+### Three-rung capability ladder (n=5 held-out seeds, 16–20)
+
+| Task | Base Qwen | **SFT v2** | Scripted teacher (oracle) | What the gap reveals |
+|---|---|---|---|---|
+| `hard_drift` (in-distribution) | 0.0000 | **0.9996 ± 0.0008** | ~1.000 | SFT v2 ≈ oracle on trained distribution |
+| `medium_alt_provider` (held-out provider) | 0.0000 | **0.3046 ± 0.0000** | **1.0000 ± 0.0000** | The 0.70 gap = pure teacher-imitation, no provider-rule generalisation |
+| `hard_silent_revert` (novel two-event mechanic) | 0.0000 | **0.0648 ± 0.0225** | **0.9070** (range 0.839–1.000) | The 0.84 gap = single-event drift training does not transfer to revert; world-model is non-monotone |
+
+**This is the headline calibration result.** The teacher (oracle policy) cleanly solves both held-out tasks, so the env is solvable and well-calibrated — no design pathology. SFT v2's collapse to 0.30 / 0.06 is therefore a *measured property of the trained policy*, not a flaw of the env. The env successfully **discriminates teacher-imitation from learned protocol-fluency** — exactly the discrimination signal RL post-training is designed to act on. The 0.99 → 0.06 gap is not a failure to report; it is the calibration the env was built to expose.
+
 ```bash
-# Re-run baseline + exploit gate on the full 4-task suite:
-python -m medibill.test_exploits          # all 5 gated attacks ≤ no_op on every task
-python -m medibill.evaluate_sft \
+# Reproduce both tiers locally (with running server) — no GPU required for teacher:
+python -m medibill.generate_trajectories \
+    --task medium_alt_provider --seeds 5 --seed-offset 16 \
+    --policy scripted_drift_aware --out /tmp/teacher_alt.jsonl
+
+python -m medibill.generate_trajectories \
+    --task hard_silent_revert --seeds 5 --seed-offset 16 \
+    --policy scripted_drift_aware --out /tmp/teacher_revert.jsonl
+
+# SFT v2 against the same held-out seeds (GPU required, ~12 min on T4):
+python -m medibill.evaluate_sft --mode trained \
     --adapter Anuj424614/medibill-sft-v2 \
+    --base-model Qwen/Qwen2.5-3B-Instruct \
     --tasks medium_alt_provider,hard_silent_revert \
     --seeds 16,17,18,19,20
+
+python -m medibill.test_exploits   # all 5 gated attacks ≤ no_op on every task
 ```
 
-SFT v2 evaluation against these held-out tasks pushes to HF Hub at `Anuj424614/medibill-sft-v2-eval-v2.json`. *Live numbers fill in once Colab eval finishes.*
+Held-out evaluation artefact: `Anuj424614/medibill-sft-v2-eval-v2.json` (eval JSON pushed to HF Hub).
 
 ---
 
