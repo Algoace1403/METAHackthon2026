@@ -12,7 +12,7 @@ That last part is the trap. Insurance policies in India drift constantly: codes 
 
 This post is about what we built, what the baselines say, what GRPO told us about reward saturation, and how a smarter teacher took a Qwen 2.5 3B model from **0.0000 → 0.9996** on the hardest task tier.
 
-> **Quick links:** Repo · [github.com/Algoace1403/METAHackthon2026](https://github.com/Algoace1403/METAHackthon2026) · HF Space (LIVE) · [huggingface.co/spaces/Anuj424614/medibill-env](https://huggingface.co/spaces/Anuj424614/medibill-env) · Colab · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Algoace1403/METAHackthon2026/blob/main/notebooks/sft_quickstart.ipynb) · Spec · [`docs/round2-spec-v3.md`](https://github.com/Algoace1403/METAHackthon2026/blob/main/docs/round2-spec-v3.md)
+> **Quick links:** Repo · [github.com/Algoace1403/METAHackthon2026](https://github.com/Algoace1403/METAHackthon2026) · HF Space (LIVE) · [huggingface.co/spaces/Anuj424614/medibill](https://huggingface.co/spaces/Anuj424614/medibill) · Colab · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Algoace1403/METAHackthon2026/blob/main/notebooks/sft_quickstart.ipynb) · Spec · [`docs/round2-spec-v3.md`](https://github.com/Algoace1403/METAHackthon2026/blob/main/docs/round2-spec-v3.md)
 
 ---
 
@@ -245,7 +245,7 @@ The repo is up. The Space is live. The grader is one `pip install` away. The not
 **Links**
 
 - **Repository:** [github.com/Algoace1403/METAHackthon2026](https://github.com/Algoace1403/METAHackthon2026)
-- **HF Space (LIVE):** [huggingface.co/spaces/Anuj424614/medibill-env](https://huggingface.co/spaces/Anuj424614/medibill-env)
+- **HF Space (LIVE):** [huggingface.co/spaces/Anuj424614/medibill](https://huggingface.co/spaces/Anuj424614/medibill)
 - **Colab notebook:** [Open in Colab](https://colab.research.google.com/github/Algoace1403/METAHackthon2026/blob/main/notebooks/sft_quickstart.ipynb)
 - **Specification:** [`docs/round2-spec-v3.md`](https://github.com/Algoace1403/METAHackthon2026/blob/main/docs/round2-spec-v3.md)
 - **Findings:** [`docs/findings.md`](https://github.com/Algoace1403/METAHackthon2026/blob/main/docs/findings.md)

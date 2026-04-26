@@ -13,7 +13,7 @@ type: space
 runtime: fastapi
 app: medibill.server.app:app
 port: 8000
-space: Anuj424614/medibill-env
+space: Anuj424614/medibill
 
 # Theme classification (Round 2)
 theme: "3.1"

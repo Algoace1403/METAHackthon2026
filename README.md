@@ -20,7 +20,7 @@ tags:
 > **two hero mechanics** (silent forward drift + silent revert), one held-out
 > provider for direct generalisation probing, and a five-attack exploit gate.
 
-**🚀 Live deployment:** [huggingface.co/spaces/Anuj424614/medibill-env](https://huggingface.co/spaces/Anuj424614/medibill-env) · API: `https://anuj424614-medibill-env.hf.space` · `/health` ✓ · **🎬 Demo:** [`/demo`](https://anuj424614-medibill-env.hf.space/demo) (live trajectory replay)
+**🚀 Live deployment:** [huggingface.co/spaces/Anuj424614/medibill](https://huggingface.co/spaces/Anuj424614/medibill) · API: `https://anuj424614-medibill.hf.space` · `/health` ✓ · **🎬 Demo:** [`/demo`](https://anuj424614-medibill.hf.space/demo) (live trajectory replay)
 
 **📖 Full write-up:** [Teaching an LLM Agent That Its World Just Changed](https://gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37) — the blog post explains the regulatory clock, the silent-drift mechanic, the 0.25 drift acceptance gap, and why two of six rubric axes are RL-only by design.
 
@@ -237,8 +237,8 @@ The narrated demo run lands at composite score **0.753** on seed 44: drift fires
 | HF Space deployment guide | [`docs/hf_space_push.md`](docs/hf_space_push.md) |
 | Baseline reproducibility CSV (180 rows) | [`docs/baseline_reproducibility.csv`](docs/baseline_reproducibility.csv) |
 | Demo video | *See [`docs/video_recording_script.md`](docs/video_recording_script.md); link in Discord post once recorded* |
-| **HuggingFace Space (LIVE)** | **https://huggingface.co/spaces/Anuj424614/medibill-env** — `/health` returns `{"status":"healthy"}` |
-| HF Space API endpoint | `https://anuj424614-medibill-env.hf.space` |
+| **HuggingFace Space (LIVE)** | **https://huggingface.co/spaces/Anuj424614/medibill** — `/health` returns `{"status":"healthy"}` |
+| HF Space API endpoint | `https://anuj424614-medibill.hf.space` |
 
 
 ## License + Citation
