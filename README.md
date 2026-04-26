@@ -16,9 +16,11 @@ tags:
 
 > **What this environment tests:** whether an LLM agent can detect that an
 > insurer's billing policy *silently changed mid-task* and re-query the rules
-> before submitting a claim against stale state.
+> before submitting a claim against stale state. Five tools, six-axis grader,
+> **two hero mechanics** (silent forward drift + silent revert), one held-out
+> provider for direct generalisation probing, and a five-attack exploit gate.
 
-**🚀 Live deployment:** [huggingface.co/spaces/Anuj424614/medibill-env](https://huggingface.co/spaces/Anuj424614/medibill-env) · API: `https://anuj424614-medibill-env.hf.space` · `/health` ✓
+**🚀 Live deployment:** [huggingface.co/spaces/Anuj424614/medibill-env](https://huggingface.co/spaces/Anuj424614/medibill-env) · API: `https://anuj424614-medibill-env.hf.space` · `/health` ✓ · **🎬 Demo:** [`/demo`](https://anuj424614-medibill-env.hf.space/demo) (live trajectory replay)
 
 **📖 Full write-up:** [Teaching an LLM Agent That Its World Just Changed](https://gist.github.com/Algoace1403/e779bc28d5b9112b6075d30b69c88f37) — the blog post explains the regulatory clock, the silent-drift mechanic, the 0.25 drift acceptance gap, and why two of six rubric axes are RL-only by design.
 
@@ -156,6 +158,30 @@ We followed SFT v1 with a 5-reward GRPO run targeting the grader's penalty struc
 **Result:** Δ_score = ±0.0002, gradient norm ~1e-7. **The rewards saturated at step 1** because SFT-from-scripted-traces already satisfies all five reward signals. This is calibration data about the env's tool-space depth, not training failure — see [`docs/reward_calibration.md`](docs/reward_calibration.md) §5 and [`docs/findings.md`](docs/findings.md) Finding 3 for full analysis.
 
 The finding directly motivated the SFT v2 teacher upgrade: instead of shaping more rewards over the saturated distribution, escape the distribution by improving the teacher. **+0.2423 lift on hard_drift in 90 trajectories of new data + 33 minutes of retraining.**
+
+---
+
+## Generalisation probes — held-out provider + second hero mechanic
+
+The 0.9996 number above is on tasks whose providers (CGHS, Star) appear in the SFT training distribution. To stress-test whether the lift is *learned protocol fluency* vs *teacher imitation*, the env exposes two additional task tiers that are explicitly **not in any training trajectory**:
+
+| Task | What it probes | Why a memorising agent fails |
+|---|---|---|
+| `medium_alt_provider` | **Held-out provider.** 10 HDFC ERGO v3.1 claims. Provider never used to generate SFT trajectories — different ICD coverage (oncology + C-prefix), different signature set, 5% coinsurance line. | An agent that learned only the Star/CGHS rule-surface will mis-predict pre-auth thresholds, narrative requirements, and the dual-signature pattern. The score gap to in-distribution medium (1.000) is the **direct measurement of generalisation vs imitation**. |
+| `hard_silent_revert` | **Second hero mechanic.** 14 Star claims; policy mutates v1.3 → v1.4 at a seed-randomised step in [8,24], then **REVERTS** to v1.3 at a later seed-randomised step. | An agent that learned "after drift fires, the new version is final" silently fails on every claim submitted in the v1.3 reverted window. Forces the world-model invariant: **policy version is dynamic, not monotone**. Re-querying must be habitual, not one-shot. |
+
+Both tasks pass the 5-attack exploit gate (no_op floors: 0.154 / 0.059; selective_submit documented as v1-grader limitation, same as for hard_drift).
+
+```bash
+# Re-run baseline + exploit gate on the full 4-task suite:
+python -m medibill.test_exploits          # all 5 gated attacks ≤ no_op on every task
+python -m medibill.evaluate_sft \
+    --adapter Anuj424614/medibill-sft-v2 \
+    --tasks medium_alt_provider,hard_silent_revert \
+    --seeds 16,17,18,19,20
+```
+
+SFT v2 evaluation against these held-out tasks pushes to HF Hub at `Anuj424614/medibill-sft-v2-eval-v2.json`. *Live numbers fill in once Colab eval finishes.*
 
 ---
 

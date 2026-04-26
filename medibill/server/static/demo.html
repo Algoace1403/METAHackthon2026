@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediBill-Env — Live Episode Demo</title>
+<style>
+:root {
+  --navy: #0A1628;
+  --coral: #FF5A4E;
+  --green: #0A843D;
+  --gray: #999999;
+  --bg: #FAFAFA;
+  --card: #FFFFFF;
+  --border: #E5E5E5;
+  --code: #F4F4F4;
+  --highlight: #FFF3CD;
+  --drift-bg: #FFE5E2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--navy);
+  line-height: 1.5;
+  padding: 2rem 1rem;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+header {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+}
+h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.25rem; }
+.subtitle { color: var(--gray); font-size: 0.95rem; margin-bottom: 1rem; }
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.meta-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+.meta-label { font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; }
+.meta-value { font-size: 1.1rem; font-weight: 600; margin-top: 0.25rem; }
+.meta-value.score { color: var(--green); }
+.controls {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+button {
+  font: inherit;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--navy);
+  background: var(--navy);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+button:hover { background: #1a2a44; }
+button.secondary { background: white; color: var(--navy); }
+button.secondary:hover { background: var(--bg); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.speed-label { font-size: 0.85rem; color: var(--gray); }
+input[type=range] { vertical-align: middle; }
+.timeline {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 0.85rem;
+  min-height: 400px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.step {
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 0.15rem;
+  display: grid;
+  grid-template-columns: 50px 130px 1fr 80px;
+  gap: 0.75rem;
+  align-items: start;
+}
+.step.active { background: var(--highlight); }
+.step.drift { background: var(--drift-bg); border-left: 3px solid var(--coral); }
+.step-num { color: var(--gray); font-weight: 600; }
+.step-tool { color: var(--navy); font-weight: 600; }
+.step-tool.ehr { color: #1f5582; }
+.step-tool.lookup { color: #b35900; }
+.step-tool.coding { color: #0a843d; }
+.step-tool.escalate { color: #6a4c93; }
+.step-tool.submit { color: var(--coral); font-weight: 700; }
+.step-detail { color: var(--navy); word-break: break-word; }
+.step-score { text-align: right; color: var(--gray); }
+.step-score.high { color: var(--green); font-weight: 600; }
+.drift-banner {
+  display: inline-block;
+  background: var(--coral);
+  color: white;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-left: 0.5rem;
+}
+.legend {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: var(--gray);
+}
+.legend strong { color: var(--navy); }
+.callout {
+  background: linear-gradient(90deg, var(--drift-bg), transparent);
+  border-left: 4px solid var(--coral);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.9rem;
+}
+.callout strong { color: var(--coral); }
+footer {
+  text-align: center;
+  color: var(--gray);
+  font-size: 0.85rem;
+  margin-top: 1.5rem;
+}
+footer a { color: var(--navy); text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>MediBill-Env — Live Episode Demo</h1>
+    <p class="subtitle">
+      <a href="https://github.com/Algoace1403/METAHackthon2026" style="color:inherit">github.com/Algoace1403/METAHackthon2026</a>
+      &nbsp;·&nbsp; ScriptedDriftAwarePolicy on <code>hard_drift</code>, seed 42
+      &nbsp;·&nbsp; Identical behavioural pattern to the SFT v2 trained adapter
+    </p>
+    <div class="meta-grid">
+      <div class="meta-card"><div class="meta-label">Task</div><div class="meta-value" id="m-task">…</div></div>
+      <div class="meta-card"><div class="meta-label">Claims</div><div class="meta-value" id="m-claims">…</div></div>
+      <div class="meta-card"><div class="meta-label">Drift events</div><div class="meta-value" id="m-drifts">…</div></div>
+      <div class="meta-card"><div class="meta-label">Steps</div><div class="meta-value" id="m-steps">…</div></div>
+      <div class="meta-card"><div class="meta-label">Final score</div><div class="meta-value score" id="m-score">…</div></div>
+    </div>
+  </header>
+  <div class="callout" id="drift-callout" style="display:none">
+    <strong>SILENT POLICY DRIFT</strong> &mdash; the env has mutated the active policy. No observation field announces this. The agent will only learn by calling <code>insurance_lookup</code> again.
+  </div>
+  <div class="controls">
+    <button id="btn-prev" class="secondary">⏮ Prev</button>
+    <button id="btn-play">▶ Play</button>
+    <button id="btn-pause" class="secondary" style="display:none">⏸ Pause</button>
+    <button id="btn-next" class="secondary">Next ⏭</button>
+    <button id="btn-reset" class="secondary">↺ Reset</button>
+    <span class="speed-label">Speed:</span>
+    <input id="speed" type="range" min="50" max="800" step="50" value="200" />
+    <span class="speed-label" id="speed-label">200 ms / step</span>
+    <span style="margin-left:auto" class="speed-label">Step <strong id="cur-step">0</strong> / <strong id="total-step">…</strong></span>
+  </div>
+  <div class="timeline" id="timeline">Loading trajectory…</div>
+  <div class="legend">
+    <strong>Tool legend</strong> &nbsp;·&nbsp;
+    <span style="color:#1f5582">●</span> ehr_query &nbsp;
+    <span style="color:#b35900">●</span> insurance_lookup &nbsp;
+    <span style="color:#0a843d">●</span> coding_engine &nbsp;
+    <span style="color:#6a4c93">●</span> escalate_to_human &nbsp;
+    <span style="color:#FF5A4E">●</span> submit_claim &nbsp;
+    &nbsp;·&nbsp; <strong>Red rows</strong> mark the step the silent policy drift fires.
+  </div>
+  <footer>
+    Pre-recorded trajectory; deterministic. The same hard_drift episode is reproducible from any clone of the repo via
+    <code>python scripts/record_demo_trajectory.py</code>.
+    Live env API: <a href="/health">/health</a> · <a href="/docs">/docs</a> · <a href="/metadata">/metadata</a>.
+  </footer>
+</div>
+<script>
+const TRAJECTORY_URL = 'demo_trajectory.json';
+
+let traj = null;
+let cur = 0;
+let timer = null;
+
+function elt(id) { return document.getElementById(id); }
+
+function toolClass(tool) {
+  return ({
+    ehr_query: 'ehr',
+    insurance_lookup: 'lookup',
+    coding_engine: 'coding',
+    escalate_to_human: 'escalate',
+    submit_claim: 'submit'
+  })[tool] || '';
+}
+
+function summariseAction(a) {
+  const p = a.params || {};
+  switch (a.tool) {
+    case 'ehr_query':
+      return `claim=${(p.claim_id || p.patient_id || '?').slice(0,18)}`;
+    case 'insurance_lookup':
+      return `provider=${p.provider || '?'}`;
+    case 'coding_engine':
+      const v = JSON.stringify(p.value);
+      return `claim=${(p.claim_id || '?').slice(0,18)} field=${p.field} value=${v && v.length>32 ? v.slice(0,32)+'…' : v}`;
+    case 'escalate_to_human':
+      return `claim=${(p.claim_id || '?').slice(0,18)} field=${p.field}`;
+    case 'submit_claim':
+      return `claim=${(p.claim_id || '?').slice(0,18)}`;
+  }
+  return JSON.stringify(p);
+}
+
+function render() {
+  if (!traj) return;
+  const tl = elt('timeline');
+  tl.innerHTML = '';
+  const stopAt = Math.min(cur, traj.steps.length);
+  for (let i = 0; i < stopAt; i++) {
+    const s = traj.steps[i];
+    const div = document.createElement('div');
+    div.className = 'step';
+    if (i === cur - 1) div.classList.add('active');
+    if (s.drift_fired_this_step) div.classList.add('drift');
+    const driftBanner = s.drift_fired_this_step ? `<span class="drift-banner">DRIFT FIRED</span>` : '';
+    div.innerHTML = `
+      <div class="step-num">${s.step}</div>
+      <div class="step-tool ${toolClass(s.action.tool)}">${s.action.tool}</div>
+      <div class="step-detail">${summariseAction(s.action)} ${driftBanner}<br><span style="color:#999">→ ${s.result.status} | active: ${s.active_policy} | submitted: ${s.submitted_count}</span></div>
+      <div class="step-score ${s.score_so_far >= 0.7 ? 'high' : ''}">${s.score_so_far.toFixed(3)}</div>`;
+    tl.appendChild(div);
+  }
+  tl.scrollTop = tl.scrollHeight;
+  elt('cur-step').textContent = cur;
+  if (traj.steps[cur - 1] && traj.steps[cur - 1].drift_fired_this_step) {
+    const cb = elt('drift-callout');
+    cb.style.display = 'block';
+    setTimeout(() => { cb.style.display = 'none'; }, 3000);
+  }
+}
+
+function play() {
+  if (cur >= traj.steps.length) cur = 0;
+  elt('btn-play').style.display = 'none';
+  elt('btn-pause').style.display = 'inline';
+  const speed = parseInt(elt('speed').value, 10);
+  timer = setInterval(() => {
+    if (cur >= traj.steps.length) {
+      pause();
+      return;
+    }
+    cur++;
+    render();
+  }, speed);
+}
+function pause() {
+  if (timer) { clearInterval(timer); timer = null; }
+  elt('btn-play').style.display = 'inline';
+  elt('btn-pause').style.display = 'none';
+}
+
+elt('btn-play').onclick = play;
+elt('btn-pause').onclick = pause;
+elt('btn-prev').onclick = () => { pause(); cur = Math.max(0, cur - 1); render(); };
+elt('btn-next').onclick = () => { pause(); cur = Math.min(traj.steps.length, cur + 1); render(); };
+elt('btn-reset').onclick = () => { pause(); cur = 0; render(); };
+elt('speed').oninput = (e) => {
+  elt('speed-label').textContent = `${e.target.value} ms / step`;
+  if (timer) { pause(); play(); }
+};
+
+fetch(TRAJECTORY_URL)
+  .then(r => r.json())
+  .then(d => {
+    traj = d;
+    elt('m-task').textContent = d.task_id;
+    elt('m-claims').textContent = d.n_claims;
+    elt('m-drifts').textContent = d.drift_events.length || 0;
+    elt('m-steps').textContent = d.n_steps;
+    elt('m-score').textContent = d.final_score.toFixed(4);
+    elt('total-step').textContent = d.steps.length;
+    elt('timeline').textContent = '';
+    render();
+  })
+  .catch(err => {
+    elt('timeline').textContent = `Failed to load trajectory: ${err}`;
+  });
+</script>
+</body>
+</html>

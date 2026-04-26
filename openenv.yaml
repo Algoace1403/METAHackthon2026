@@ -36,6 +36,18 @@ tasks:
     drift: true
     n_claims: 12
     provider: star_v1_3_to_1_4
+  - id: medium_alt_provider
+    description: HELD-OUT GENERALISATION PROBE. 10 HDFC ERGO v3.1 claims. Provider NOT used to generate any SFT training trajectory. Gap to in-distribution medium score measures teacher-imitation vs learned-protocol-fluency.
+    drift: false
+    n_claims: 10
+    provider: hdfc_ergo_v3_1
+    held_out: true
+  - id: hard_silent_revert
+    description: SECOND HERO MECHANIC. 14 Star claims. Policy mutates v1.3 → v1.4 at a seed-randomized step in [8,24], then REVERTS to v1.3 at a later seed-randomized step. Breaks the naive "after drift, the new version is final" heuristic — agent must re-query close to every submit.
+    drift: true
+    n_claims: 14
+    provider: star_v1_3_v1_4_v1_3
+    drift_events: 2
 
 # Tools available to the agent (5 + 2 meta)
 tools:
@@ -75,6 +87,18 @@ grader:
     - name: drift_bonus
       weight: 0.05
       description: Gated on post-drift re-query + final correctness (RL-only target)
+  optional_llm_judge:
+    name: narrative_quality
+    weight_when_enabled: 0.05
+    weight_taken_from: efficiency
+    enable_via_env: MEDIBILL_NARRATIVE_AXIS
+    description: >
+      OPTIONAL 7th axis. Off by default to keep headline numbers byte-stable.
+      Deterministic fallback uses a 3-component heuristic (length / clinical
+      term coverage / diagnosis-code anchoring). LLM upgrade path enabled by
+      setting MEDIBILL_NARRATIVE_LLM=1 + ANTHROPIC_API_KEY; calls Claude
+      Haiku at grading time with a clinical-plausibility rubric, falls back
+      to the deterministic path if the API call fails.
   penalty_cap: 0.50
   bonus_cap: 0.15
 
@@ -101,15 +125,24 @@ training:
   trajectories: traces/all_seeds_0_15.jsonl
   eval: traces/eval.jsonl
 
-# Headline result (n=5 held-out seeds, hard_drift)
+# Headline result (n=5 held-out seeds)
 results:
-  base_score: 0.0000
-  sft_v1_score: 0.7573
-  grpo_score: 0.7575
-  sft_v2_score: 0.9996
-  average_lift_base_to_sft_v2: 0.9999
-  parse_failures: 0
-  episodes: 15
+  hard_drift:
+    base_score: 0.0000
+    sft_v1_score: 0.7573
+    grpo_score: 0.7575
+    sft_v2_score: 0.9996
+    average_lift_base_to_sft_v2: 0.9999
+    parse_failures: 0
+    episodes: 15
+  medium_alt_provider_held_out:
+    base_score: 0.0000
+    sft_v2_score: pending  # filled in once Colab eval finishes
+    note: "Provider HDFC_ERGO never seen in training. Direct generalisation probe."
+  hard_silent_revert:
+    base_score: 0.0000
+    sft_v2_score: pending  # filled in once Colab eval finishes
+    note: "Two-event drift breaks 'after drift the new version is final' heuristic."
 
 # Repository / additional materials
 repository: https://github.com/Algoace1403/METAHackthon2026

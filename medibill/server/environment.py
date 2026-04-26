@@ -79,16 +79,23 @@ class MediBillEnvironment(Environment[MediBillAction, MediBillObservation, MediB
         built = task.build()
         actual_seed = seed if seed is not None else DEFAULT_SEED
 
-        # Randomise drift timing on hard_drift so an agent cannot memorise a
+        # Randomise drift timing per task so an agent cannot memorise a
         # fixed schedule. Uses the episode seed so grading stays reproducible
-        # per seed. See tasks.DRIFT_STEP_CHOICES.
+        # per seed. hard_drift gets one randomised step; hard_silent_revert
+        # gets two (drift forward at step S1, revert at step S1 + gap).
         drift_events = list(built["drift_events"])
         if task_id == "hard_drift" and drift_events:
             from medibill.tasks import DRIFT_STEP_CHOICES
             rng = random.Random(actual_seed)
             new_step = rng.choice(DRIFT_STEP_CHOICES)
-            # Only rewrite the first event; future tasks can declare more.
             drift_events[0] = {**drift_events[0], "step": new_step}
+        elif task_id == "hard_silent_revert" and len(drift_events) >= 2:
+            from medibill.tasks import REVERT_FIRST_DRIFT_CHOICES, REVERT_GAP_CHOICES
+            rng = random.Random(actual_seed)
+            first_step = rng.choice(REVERT_FIRST_DRIFT_CHOICES)
+            gap = rng.choice(REVERT_GAP_CHOICES)
+            drift_events[0] = {**drift_events[0], "step": first_step}
+            drift_events[1] = {**drift_events[1], "step": first_step + gap}
 
         # The agent's starting dirty state: identity fields intact from the
         # ground truth; policy-sensitive fields cleared so the agent must call

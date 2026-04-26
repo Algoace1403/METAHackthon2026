@@ -353,6 +353,53 @@ def make_scripted_agent() -> AgentCallable:
 # ---------------------------------------------------------------------------
 
 
+def evaluate_ad_hoc_tasks(
+    task_seeds: list[tuple[str, int]],
+    agent: AgentCallable,
+) -> Dict[str, Any]:
+    """Evaluate ``agent`` on (task_id, seed) pairs without an eval JSONL file.
+
+    Used for held-out generalisation probes (medium_alt_provider,
+    hard_silent_revert) and any task tier the original eval split did not
+    contain. Output schema mirrors :func:`evaluate_against_eval_split` minus
+    the scripted comparison column.
+    """
+    trained_by_task: Dict[str, List[float]] = defaultdict(list)
+    per_episode: List[Dict[str, Any]] = []
+    total_parse_failures = 0
+
+    for task_id, seed in task_seeds:
+        result = rollout_one(agent, task_id, int(seed))
+        trained_by_task[task_id].append(result.score)
+        total_parse_failures += result.parse_failures
+        per_episode.append({
+            "task_id": task_id,
+            "seed": int(seed),
+            "trained_score": result.score,
+            "n_steps": result.n_steps,
+            "parse_failures": result.parse_failures,
+        })
+
+    summary: Dict[str, Dict[str, float]] = {}
+    for task_id in sorted(trained_by_task.keys()):
+        t = trained_by_task[task_id]
+        from statistics import pstdev
+        summary[task_id] = {
+            "n":            len(t),
+            "trained_mean": round(fmean(t), 4),
+            "trained_std":  round(pstdev(t) if len(t) > 1 else 0.0, 4),
+            "min":          round(min(t), 4),
+            "max":          round(max(t), 4),
+        }
+
+    return {
+        "per_task": summary,
+        "per_episode": per_episode,
+        "total_parse_failures": total_parse_failures,
+        "mode": "ad_hoc_tasks",
+    }
+
+
 def _cmd_eval(args: argparse.Namespace) -> int:
     if args.mode == "trained":
         try:
@@ -384,25 +431,43 @@ def _cmd_eval(args: argparse.Namespace) -> int:
     else:
         agent = make_scripted_agent()
 
-    report = evaluate_against_eval_split(args.eval, agent)
+    if args.tasks:
+        # Ad-hoc held-out task evaluation — no eval JSONL needed.
+        task_ids = [t.strip() for t in args.tasks.split(",") if t.strip()]
+        seeds = [int(s.strip()) for s in args.seeds.split(",") if s.strip()]
+        task_seeds = [(t, s) for t in task_ids for s in seeds]
+        report = evaluate_ad_hoc_tasks(task_seeds, agent)
+    else:
+        report = evaluate_against_eval_split(args.eval, agent)
     print(json.dumps(report, indent=2))
     return 0
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate a MediBill SFT checkpoint.")
-    parser.add_argument("--eval", type=Path, required=True,
-                        help="Held-out eval JSONL (e.g. traces/eval.jsonl).")
+    parser.add_argument("--eval", type=Path, default=None,
+                        help="Held-out eval JSONL (e.g. traces/eval.jsonl). "
+                             "Required unless --tasks is supplied.")
+    parser.add_argument("--tasks", type=str, default=None,
+                        help="Comma-separated task IDs for ad-hoc held-out eval, "
+                             "e.g. 'medium_alt_provider,hard_silent_revert'. "
+                             "Requires --seeds. Bypasses --eval.")
+    parser.add_argument("--seeds", type=str, default="16,17,18,19,20",
+                        help="Comma-separated seeds for --tasks mode. "
+                             "Default 16,17,18,19,20 (held-out range).")
     parser.add_argument("--mode", choices=("trained", "plumbing"), default="trained",
                         help="'trained' loads adapter+base model (CUDA); "
                              "'plumbing' uses a fixed-action agent for local smoke.")
-    parser.add_argument("--adapter", type=Path, default=None,
-                        help="Path to the trained LoRA adapter.")
+    parser.add_argument("--adapter", type=str, default=None,
+                        help="Path to the trained LoRA adapter (HF Hub id or local dir).")
     parser.add_argument("--base-model", default="Qwen/Qwen2.5-3B-Instruct",
                         help="Base model id (for mode=trained).")
     parser.add_argument("--max-new-tokens", type=int, default=128,
                         help="Generation budget per step.")
     args = parser.parse_args()
+
+    if not args.eval and not args.tasks:
+        parser.error("Either --eval or --tasks is required.")
     raise SystemExit(_cmd_eval(args))
 
 

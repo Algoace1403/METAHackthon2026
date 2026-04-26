@@ -1,0 +1,2447 @@
+{
+  "task_id": "hard_drift",
+  "seed": 42,
+  "policy": "ScriptedDriftAwarePolicy",
+  "drift_events": [
+    {
+      "step": 30,
+      "from": "v1.3",
+      "to": "v1.4"
+    }
+  ],
+  "n_claims": 12,
+  "n_steps": 117,
+  "final_score": 1.0,
+  "submitted_claim_ids": [
+    "CLM-Star-2024000",
+    "CLM-Star-2024001",
+    "CLM-Star-2024002",
+    "CLM-Star-2024003",
+    "CLM-Star-2024004",
+    "CLM-Star-2024005",
+    "CLM-Star-2024006",
+    "CLM-Star-2024007",
+    "CLM-Star-2024008",
+    "CLM-Star-2024009",
+    "CLM-Star-2024010",
+    "CLM-Star-2024011"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.3.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 0,
+      "score_so_far": 0.0,
+      "budget_remaining": 199.0
+    },
+    {
+      "step": 2,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024000"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 0,
+      "score_so_far": 0.0,
+      "budget_remaining": 198.5
+    },
+    {
+      "step": 3,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024000",
+          "field": "policy_version",
+          "value": "v1.3"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024000'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 0,
+      "score_so_far": 0.1053,
+      "budget_remaining": 196.5
+    },
+    {
+      "step": 4,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024000",
+          "field": "pre_auth_flag",
+          "value": false
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024000'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 0,
+      "score_so_far": 0.1053,
+      "budget_remaining": 194.5
+    },
+    {
+      "step": 5,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024000",
+          "field": "pre_auth_number",
+          "value": null
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024000'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 0,
+      "score_so_far": 0.1053,
+      "budget_remaining": 192.5
+    },
+    {
+      "step": 6,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024000",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024000'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 0,
+      "score_so_far": 0.1053,
+      "budget_remaining": 190.5
+    },
+    {
+      "step": 7,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024000",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024000'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 0,
+      "score_so_far": 0.1053,
+      "budget_remaining": 188.5
+    },
+    {
+      "step": 8,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024000",
+          "field": "diagnosis_narrative",
+          "value": ""
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024000'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 0,
+      "score_so_far": 0.1053,
+      "budget_remaining": 186.5
+    },
+    {
+      "step": 9,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.3.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 0,
+      "score_so_far": 0.1053,
+      "budget_remaining": 185.5
+    },
+    {
+      "step": 10,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024000"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024000' at step 10 under policy v1.3.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 1,
+      "score_so_far": 0.1623,
+      "budget_remaining": 185.5
+    },
+    {
+      "step": 11,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024001"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 1,
+      "score_so_far": 0.1623,
+      "budget_remaining": 185.0
+    },
+    {
+      "step": 12,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024001",
+          "field": "policy_version",
+          "value": "v1.3"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024001'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 1,
+      "score_so_far": 0.1623,
+      "budget_remaining": 183.0
+    },
+    {
+      "step": 13,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024001",
+          "field": "pre_auth_flag",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024001'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 1,
+      "score_so_far": 0.1623,
+      "budget_remaining": 181.0
+    },
+    {
+      "step": 14,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024001",
+          "field": "pre_auth_number",
+          "value": "PA-Star-2024001"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024001'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 1,
+      "score_so_far": 0.1623,
+      "budget_remaining": 179.0
+    },
+    {
+      "step": 15,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024001",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024001'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 1,
+      "score_so_far": 0.1623,
+      "budget_remaining": 177.0
+    },
+    {
+      "step": 16,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024001",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024001'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 1,
+      "score_so_far": 0.1623,
+      "budget_remaining": 175.0
+    },
+    {
+      "step": 17,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024001",
+          "field": "diagnosis_narrative",
+          "value": ""
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024001'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 1,
+      "score_so_far": 0.1623,
+      "budget_remaining": 173.0
+    },
+    {
+      "step": 18,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.3.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 1,
+      "score_so_far": 0.1623,
+      "budget_remaining": 172.0
+    },
+    {
+      "step": 19,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024001"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024001' at step 19 under policy v1.3.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 2,
+      "score_so_far": 0.2646,
+      "budget_remaining": 172.0
+    },
+    {
+      "step": 20,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024002"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 2,
+      "score_so_far": 0.2644,
+      "budget_remaining": 171.5
+    },
+    {
+      "step": 21,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024002",
+          "field": "policy_version",
+          "value": "v1.3"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024002'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 2,
+      "score_so_far": 0.2639,
+      "budget_remaining": 169.5
+    },
+    {
+      "step": 22,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024002",
+          "field": "pre_auth_flag",
+          "value": false
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024002'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 2,
+      "score_so_far": 0.2634,
+      "budget_remaining": 167.5
+    },
+    {
+      "step": 23,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024002",
+          "field": "pre_auth_number",
+          "value": null
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024002'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 2,
+      "score_so_far": 0.2629,
+      "budget_remaining": 165.5
+    },
+    {
+      "step": 24,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024002",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024002'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 2,
+      "score_so_far": 0.2623,
+      "budget_remaining": 163.5
+    },
+    {
+      "step": 25,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024002",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024002'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 2,
+      "score_so_far": 0.2618,
+      "budget_remaining": 161.5
+    },
+    {
+      "step": 26,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024002",
+          "field": "diagnosis_narrative",
+          "value": ""
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024002'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 2,
+      "score_so_far": 0.2613,
+      "budget_remaining": 159.5
+    },
+    {
+      "step": 27,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.3.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 2,
+      "score_so_far": 0.261,
+      "budget_remaining": 158.5
+    },
+    {
+      "step": 28,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024002"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024002' at step 28 under policy v1.3.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.318,
+      "budget_remaining": 158.5
+    },
+    {
+      "step": 29,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024003"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.3",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.3179,
+      "budget_remaining": 158.0
+    },
+    {
+      "step": 30,
+      "action": {
+        "tool": "escalate_to_human",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "diagnosis_code",
+          "reason": "ambiguous"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Escalated 'diagnosis_code' on 'CLM-Star-2024003' for human review.",
+        "cost": 0.3
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": true,
+      "submitted_count": 3,
+      "score_so_far": 0.4436,
+      "budget_remaining": 157.7
+    },
+    {
+      "step": 31,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "policy_version",
+          "value": "v1.3"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4431,
+      "budget_remaining": 155.7
+    },
+    {
+      "step": 32,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "pre_auth_flag",
+          "value": false
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4426,
+      "budget_remaining": 153.7
+    },
+    {
+      "step": 33,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "pre_auth_number",
+          "value": null
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4421,
+      "budget_remaining": 151.7
+    },
+    {
+      "step": 34,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4416,
+      "budget_remaining": 149.7
+    },
+    {
+      "step": 35,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4411,
+      "budget_remaining": 147.7
+    },
+    {
+      "step": 36,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "diagnosis_narrative",
+          "value": ""
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4406,
+      "budget_remaining": 145.7
+    },
+    {
+      "step": 37,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4404,
+      "budget_remaining": 144.7
+    },
+    {
+      "step": 38,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "policy_version",
+          "value": "v1.4"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4399,
+      "budget_remaining": 142.7
+    },
+    {
+      "step": 39,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "pre_auth_flag",
+          "value": false
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4394,
+      "budget_remaining": 140.7
+    },
+    {
+      "step": 40,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "pre_auth_number",
+          "value": null
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4389,
+      "budget_remaining": 138.7
+    },
+    {
+      "step": 41,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician",
+            "hospital_authorized_signatory"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4384,
+      "budget_remaining": 136.7
+    },
+    {
+      "step": 42,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4379,
+      "budget_remaining": 134.7
+    },
+    {
+      "step": 43,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024003",
+          "field": "diagnosis_narrative",
+          "value": "Patient presented with clinical findings consistent with J84.9. Inpatient evaluation and management performed per standard protocol."
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024003'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4374,
+      "budget_remaining": 132.7
+    },
+    {
+      "step": 44,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 3,
+      "score_so_far": 0.4371,
+      "budget_remaining": 131.7
+    },
+    {
+      "step": 45,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024003"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024003' at step 45 under policy v1.4.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 4,
+      "score_so_far": 0.4912,
+      "budget_remaining": 131.7
+    },
+    {
+      "step": 46,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024004"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 4,
+      "score_so_far": 0.4911,
+      "budget_remaining": 131.2
+    },
+    {
+      "step": 47,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024004",
+          "field": "policy_version",
+          "value": "v1.4"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024004'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 4,
+      "score_so_far": 0.4906,
+      "budget_remaining": 129.2
+    },
+    {
+      "step": 48,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024004",
+          "field": "pre_auth_flag",
+          "value": false
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024004'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 4,
+      "score_so_far": 0.4901,
+      "budget_remaining": 127.2
+    },
+    {
+      "step": 49,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024004",
+          "field": "pre_auth_number",
+          "value": null
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024004'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 4,
+      "score_so_far": 0.4896,
+      "budget_remaining": 125.2
+    },
+    {
+      "step": 50,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024004",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician",
+            "hospital_authorized_signatory"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024004'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 4,
+      "score_so_far": 0.4891,
+      "budget_remaining": 123.2
+    },
+    {
+      "step": 51,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024004",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024004'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 4,
+      "score_so_far": 0.4886,
+      "budget_remaining": 121.2
+    },
+    {
+      "step": 52,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024004",
+          "field": "diagnosis_narrative",
+          "value": "Patient presented with clinical findings consistent with E11.22. Inpatient evaluation and management performed per standard protocol."
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024004'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 4,
+      "score_so_far": 0.4881,
+      "budget_remaining": 119.2
+    },
+    {
+      "step": 53,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 4,
+      "score_so_far": 0.4878,
+      "budget_remaining": 118.2
+    },
+    {
+      "step": 54,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024004"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024004' at step 54 under policy v1.4.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 5,
+      "score_so_far": 0.542,
+      "budget_remaining": 118.2
+    },
+    {
+      "step": 55,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024005"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 5,
+      "score_so_far": 0.5419,
+      "budget_remaining": 117.7
+    },
+    {
+      "step": 56,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024005",
+          "field": "policy_version",
+          "value": "v1.4"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024005'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 5,
+      "score_so_far": 0.5414,
+      "budget_remaining": 115.7
+    },
+    {
+      "step": 57,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024005",
+          "field": "pre_auth_flag",
+          "value": false
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024005'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 5,
+      "score_so_far": 0.5409,
+      "budget_remaining": 113.7
+    },
+    {
+      "step": 58,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024005",
+          "field": "pre_auth_number",
+          "value": null
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024005'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 5,
+      "score_so_far": 0.5404,
+      "budget_remaining": 111.7
+    },
+    {
+      "step": 59,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024005",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician",
+            "hospital_authorized_signatory"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024005'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 5,
+      "score_so_far": 0.5399,
+      "budget_remaining": 109.7
+    },
+    {
+      "step": 60,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024005",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024005'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 5,
+      "score_so_far": 0.5394,
+      "budget_remaining": 107.7
+    },
+    {
+      "step": 61,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024005",
+          "field": "diagnosis_narrative",
+          "value": "Patient presented with clinical findings consistent with R07.9. Inpatient evaluation and management performed per standard protocol."
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024005'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 5,
+      "score_so_far": 0.5389,
+      "budget_remaining": 105.7
+    },
+    {
+      "step": 62,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 5,
+      "score_so_far": 0.5387,
+      "budget_remaining": 104.7
+    },
+    {
+      "step": 63,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024005"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024005' at step 63 under policy v1.4.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 6,
+      "score_so_far": 0.6429,
+      "budget_remaining": 104.7
+    },
+    {
+      "step": 64,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024006"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 6,
+      "score_so_far": 0.6428,
+      "budget_remaining": 104.2
+    },
+    {
+      "step": 65,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024006",
+          "field": "policy_version",
+          "value": "v1.4"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024006'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 6,
+      "score_so_far": 0.6423,
+      "budget_remaining": 102.2
+    },
+    {
+      "step": 66,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024006",
+          "field": "pre_auth_flag",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024006'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 6,
+      "score_so_far": 0.6418,
+      "budget_remaining": 100.2
+    },
+    {
+      "step": 67,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024006",
+          "field": "pre_auth_number",
+          "value": "PA-Star-2024006"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024006'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 6,
+      "score_so_far": 0.6413,
+      "budget_remaining": 98.2
+    },
+    {
+      "step": 68,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024006",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician",
+            "hospital_authorized_signatory"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024006'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 6,
+      "score_so_far": 0.6408,
+      "budget_remaining": 96.2
+    },
+    {
+      "step": 69,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024006",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024006'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 6,
+      "score_so_far": 0.6403,
+      "budget_remaining": 94.2
+    },
+    {
+      "step": 70,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024006",
+          "field": "diagnosis_narrative",
+          "value": "Patient presented with clinical findings consistent with I21.9. Inpatient evaluation and management performed per standard protocol."
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024006'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 6,
+      "score_so_far": 0.6398,
+      "budget_remaining": 92.2
+    },
+    {
+      "step": 71,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 6,
+      "score_so_far": 0.6395,
+      "budget_remaining": 91.2
+    },
+    {
+      "step": 72,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024006"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024006' at step 72 under policy v1.4.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 7,
+      "score_so_far": 0.6936,
+      "budget_remaining": 91.2
+    },
+    {
+      "step": 73,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024007"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 7,
+      "score_so_far": 0.6935,
+      "budget_remaining": 90.7
+    },
+    {
+      "step": 74,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024007",
+          "field": "policy_version",
+          "value": "v1.4"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024007'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 7,
+      "score_so_far": 0.693,
+      "budget_remaining": 88.7
+    },
+    {
+      "step": 75,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024007",
+          "field": "pre_auth_flag",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024007'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 7,
+      "score_so_far": 0.6925,
+      "budget_remaining": 86.7
+    },
+    {
+      "step": 76,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024007",
+          "field": "pre_auth_number",
+          "value": "PA-Star-2024007"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024007'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 7,
+      "score_so_far": 0.692,
+      "budget_remaining": 84.7
+    },
+    {
+      "step": 77,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024007",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician",
+            "hospital_authorized_signatory"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024007'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 7,
+      "score_so_far": 0.6915,
+      "budget_remaining": 82.7
+    },
+    {
+      "step": 78,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024007",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024007'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 7,
+      "score_so_far": 0.691,
+      "budget_remaining": 80.7
+    },
+    {
+      "step": 79,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024007",
+          "field": "diagnosis_narrative",
+          "value": "Patient presented with clinical findings consistent with K35.80. Inpatient evaluation and management performed per standard protocol."
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024007'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 7,
+      "score_so_far": 0.6905,
+      "budget_remaining": 78.7
+    },
+    {
+      "step": 80,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 7,
+      "score_so_far": 0.6902,
+      "budget_remaining": 77.7
+    },
+    {
+      "step": 81,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024007"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024007' at step 81 under policy v1.4.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 8,
+      "score_so_far": 0.7444,
+      "budget_remaining": 77.7
+    },
+    {
+      "step": 82,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024008"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 8,
+      "score_so_far": 0.7443,
+      "budget_remaining": 77.2
+    },
+    {
+      "step": 83,
+      "action": {
+        "tool": "escalate_to_human",
+        "params": {
+          "claim_id": "CLM-Star-2024008",
+          "field": "pre_auth_flag",
+          "reason": "ambiguous"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Escalated 'pre_auth_flag' on 'CLM-Star-2024008' for human review.",
+        "cost": 0.3
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 8,
+      "score_so_far": 0.7442,
+      "budget_remaining": 76.9
+    },
+    {
+      "step": 84,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024008",
+          "field": "policy_version",
+          "value": "v1.4"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024008'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 8,
+      "score_so_far": 0.7437,
+      "budget_remaining": 74.9
+    },
+    {
+      "step": 85,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024008",
+          "field": "pre_auth_number",
+          "value": "PA-Star-2024008"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024008'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 8,
+      "score_so_far": 0.7432,
+      "budget_remaining": 72.9
+    },
+    {
+      "step": 86,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024008",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician",
+            "hospital_authorized_signatory"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024008'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 8,
+      "score_so_far": 0.7427,
+      "budget_remaining": 70.9
+    },
+    {
+      "step": 87,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024008",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024008'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 8,
+      "score_so_far": 0.7422,
+      "budget_remaining": 68.9
+    },
+    {
+      "step": 88,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024008",
+          "field": "diagnosis_narrative",
+          "value": "Patient presented with clinical findings consistent with I21.9. Inpatient evaluation and management performed per standard protocol."
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024008'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 8,
+      "score_so_far": 0.7417,
+      "budget_remaining": 66.9
+    },
+    {
+      "step": 89,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 8,
+      "score_so_far": 0.7415,
+      "budget_remaining": 65.9
+    },
+    {
+      "step": 90,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024008"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024008' at step 90 under policy v1.4.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 9,
+      "score_so_far": 0.8029,
+      "budget_remaining": 65.9
+    },
+    {
+      "step": 91,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024009"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 9,
+      "score_so_far": 0.8028,
+      "budget_remaining": 65.4
+    },
+    {
+      "step": 92,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024009",
+          "field": "policy_version",
+          "value": "v1.4"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024009'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 9,
+      "score_so_far": 0.8023,
+      "budget_remaining": 63.4
+    },
+    {
+      "step": 93,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024009",
+          "field": "pre_auth_flag",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024009'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 9,
+      "score_so_far": 0.8018,
+      "budget_remaining": 61.4
+    },
+    {
+      "step": 94,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024009",
+          "field": "pre_auth_number",
+          "value": "PA-Star-2024009"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024009'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 9,
+      "score_so_far": 0.8013,
+      "budget_remaining": 59.4
+    },
+    {
+      "step": 95,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024009",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician",
+            "hospital_authorized_signatory"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024009'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 9,
+      "score_so_far": 0.8008,
+      "budget_remaining": 57.4
+    },
+    {
+      "step": 96,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024009",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024009'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 9,
+      "score_so_far": 0.8003,
+      "budget_remaining": 55.4
+    },
+    {
+      "step": 97,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024009",
+          "field": "diagnosis_narrative",
+          "value": "Patient presented with clinical findings consistent with K40.90. Inpatient evaluation and management performed per standard protocol."
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024009'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 9,
+      "score_so_far": 0.7998,
+      "budget_remaining": 53.4
+    },
+    {
+      "step": 98,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 9,
+      "score_so_far": 0.7995,
+      "budget_remaining": 52.4
+    },
+    {
+      "step": 99,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024009"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024009' at step 99 under policy v1.4.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 10,
+      "score_so_far": 0.9037,
+      "budget_remaining": 52.4
+    },
+    {
+      "step": 100,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024010"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 10,
+      "score_so_far": 0.9036,
+      "budget_remaining": 51.9
+    },
+    {
+      "step": 101,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024010",
+          "field": "policy_version",
+          "value": "v1.4"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024010'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 10,
+      "score_so_far": 0.9031,
+      "budget_remaining": 49.9
+    },
+    {
+      "step": 102,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024010",
+          "field": "pre_auth_flag",
+          "value": false
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024010'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 10,
+      "score_so_far": 0.9026,
+      "budget_remaining": 47.9
+    },
+    {
+      "step": 103,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024010",
+          "field": "pre_auth_number",
+          "value": null
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024010'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 10,
+      "score_so_far": 0.9021,
+      "budget_remaining": 45.9
+    },
+    {
+      "step": 104,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024010",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician",
+            "hospital_authorized_signatory"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024010'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 10,
+      "score_so_far": 0.9016,
+      "budget_remaining": 43.9
+    },
+    {
+      "step": 105,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024010",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024010'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 10,
+      "score_so_far": 0.9011,
+      "budget_remaining": 41.9
+    },
+    {
+      "step": 106,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024010",
+          "field": "diagnosis_narrative",
+          "value": "Patient presented with clinical findings consistent with J45.909. Inpatient evaluation and management performed per standard protocol."
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024010'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 10,
+      "score_so_far": 0.9006,
+      "budget_remaining": 39.9
+    },
+    {
+      "step": 107,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 10,
+      "score_so_far": 0.9003,
+      "budget_remaining": 38.9
+    },
+    {
+      "step": 108,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024010"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024010' at step 108 under policy v1.4.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 11,
+      "score_so_far": 0.9544,
+      "budget_remaining": 38.9
+    },
+    {
+      "step": 109,
+      "action": {
+        "tool": "ehr_query",
+        "params": {
+          "claim_id": "CLM-Star-2024011"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Found 1 EHR record(s).",
+        "cost": 0.5
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 11,
+      "score_so_far": 0.9543,
+      "budget_remaining": 38.4
+    },
+    {
+      "step": 110,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024011",
+          "field": "policy_version",
+          "value": "v1.4"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'policy_version' on 'CLM-Star-2024011'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 11,
+      "score_so_far": 0.9538,
+      "budget_remaining": 36.4
+    },
+    {
+      "step": 111,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024011",
+          "field": "pre_auth_flag",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_flag' on 'CLM-Star-2024011'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 11,
+      "score_so_far": 0.9533,
+      "budget_remaining": 34.4
+    },
+    {
+      "step": 112,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024011",
+          "field": "pre_auth_number",
+          "value": "PA-Star-2024011"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'pre_auth_number' on 'CLM-Star-2024011'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 11,
+      "score_so_far": 0.9528,
+      "budget_remaining": 32.4
+    },
+    {
+      "step": 113,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024011",
+          "field": "required_signatures",
+          "value": [
+            "treating_physician",
+            "hospital_authorized_signatory"
+          ]
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'required_signatures' on 'CLM-Star-2024011'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 11,
+      "score_so_far": 0.9523,
+      "budget_remaining": 30.4
+    },
+    {
+      "step": 114,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024011",
+          "field": "discharge_summary_attached",
+          "value": true
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'discharge_summary_attached' on 'CLM-Star-2024011'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 11,
+      "score_so_far": 0.9518,
+      "budget_remaining": 28.4
+    },
+    {
+      "step": 115,
+      "action": {
+        "tool": "coding_engine",
+        "params": {
+          "claim_id": "CLM-Star-2024011",
+          "field": "diagnosis_narrative",
+          "value": "Patient presented with clinical findings consistent with S72.001A. Inpatient evaluation and management performed per standard protocol."
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Set 'diagnosis_narrative' on 'CLM-Star-2024011'.",
+        "cost": 2.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 11,
+      "score_so_far": 0.9513,
+      "budget_remaining": 26.4
+    },
+    {
+      "step": 116,
+      "action": {
+        "tool": "insurance_lookup",
+        "params": {
+          "provider": "Star"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Current policy for Star: v1.4.",
+        "cost": 1.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 11,
+      "score_so_far": 0.9511,
+      "budget_remaining": 25.4
+    },
+    {
+      "step": 117,
+      "action": {
+        "tool": "submit_claim",
+        "params": {
+          "claim_id": "CLM-Star-2024011"
+        }
+      },
+      "result": {
+        "status": "success",
+        "message": "Submitted 'CLM-Star-2024011' at step 117 under policy v1.4.",
+        "cost": 0.0
+      },
+      "active_policy": "v1.4",
+      "drift_fired_this_step": false,
+      "submitted_count": 12,
+      "score_so_far": 1.0,
+      "budget_remaining": 25.4
+    }
+  ]
+}

@@ -204,3 +204,76 @@ HARD_DRIFT = MediBillTask(
     ],
 )
 register_task(HARD_DRIFT)
+
+
+# MEDIUM_ALT_PROVIDER — held-out provider (HDFC_ERGO) NOT seen in SFT v2 training.
+# Direct generalisation test: training data was generated against Star v1.3→v1.4
+# and CGHS v2024.1; HDFC_ERGO v3.1 has a different rules surface (oncology coverage,
+# narrative + dual signatures, 5% coinsurance). A model that only memorised the
+# scripted_drift_aware teacher's Star/CGHS heuristics will degrade here.
+MEDIUM_ALT_PROVIDER = MediBillTask(
+    task_id="medium_alt_provider",
+    name="Held-Out Provider Generalisation (HDFC ERGO)",
+    difficulty="medium",
+    description=(
+        "Ten HDFC ERGO claims under policy v3.1. This provider was NOT used "
+        "to generate any SFT training trajectory — it is a generalisation "
+        "probe. v3.1 covers oncology (C-prefix) ICD codes (Star did not), "
+        "requires diagnosis narrative on every claim, and uses dual "
+        "signatures with a 5% coinsurance line. No mid-episode drift. "
+        "Expected outcome: SFT v2 should outscore the base model by a wide "
+        "margin (+0.3 to +0.6) but NOT hit ceiling — the gap to its "
+        "in-distribution score (~1.000 on medium_multi_payer) measures how "
+        "much of its lift is teacher imitation vs learned protocol fluency."
+    ),
+    provider="HDFC_ERGO",
+    initial_policy_version="v3.1",
+    n_claims=10,
+    seed=51,
+    drift_events=[],
+    max_steps=100,
+    budget=150.0,
+)
+register_task(MEDIUM_ALT_PROVIDER)
+
+
+# HARD_SILENT_REVERT — second drift mechanic that breaks the naive
+# "always re-query before submit" heuristic SFT v2 likely learned.
+# Policy mutates v1.3 → v1.4 at one step and reverts v1.4 → v1.3 at a later step.
+# Agent cannot just "remember the latest version it saw" — it must re-query
+# CLOSE TO submit time, every time. Two seed-randomised steps; the second is
+# always at least 5 steps after the first.
+REVERT_FIRST_DRIFT_CHOICES: tuple[int, ...] = tuple(range(8, 25))
+REVERT_GAP_CHOICES: tuple[int, ...] = tuple(range(8, 18))
+
+HARD_SILENT_REVERT = MediBillTask(
+    task_id="hard_silent_revert",
+    name="Silent Policy Revert (Two Drift Events)",
+    difficulty="hard",
+    description=(
+        "Fourteen Star claims under policy v1.3. The active policy mutates "
+        "to v1.4 at a seed-dependent step in [8, 24], then REVERTS to v1.3 "
+        "at a later seed-dependent step. Submissions are graded against "
+        "the policy active at submit time. An agent that learned 'always "
+        "re-query before submit' continues to score; an agent that "
+        "memorised 'after drift, the new version is v1.4' silently fails "
+        "on every claim submitted in the v1.3 reverted window. This is a "
+        "second-mechanic test of the world-model invariant that policy "
+        "version is dynamic, not monotone."
+    ),
+    provider="Star",
+    initial_policy_version="v1.3",
+    n_claims=14,
+    seed=46,
+    # Two placeholder events; environment replaces both steps at reset.
+    drift_events=[
+        DriftEvent(step=12, to_version="v1.4"),
+        DriftEvent(step=25, to_version="v1.3"),
+    ],
+    max_steps=160,
+    budget=220.0,
+    ambiguous_cells=[
+        ("CLAIM-Star-0004", "diagnosis_code"),
+    ],
+)
+register_task(HARD_SILENT_REVERT)

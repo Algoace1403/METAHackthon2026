@@ -53,3 +53,4 @@ exclude = ["tests*", "scripts*", "server*", "submission_evidence*", "docs*"]
 
 [tool.setuptools.package-data]
 "medibill.ontology" = ["*.json"]
+"medibill.server" = ["static/*.html", "static/*.json"]

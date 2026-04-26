@@ -1,7 +1,10 @@
 """Expert-inspired deterministic grader for MediBill-Env.
 
 Six-axis composite score with explicit field partitioning, anti-hacking gates
-and a drift-aware bonus. See spec v3 sections 5 and 6 for the design rationale.
+and a drift-aware bonus. Plus an OPTIONAL seventh axis (``narrative_quality``)
+that is off by default (weight 0.0) but can be enabled via the
+``MEDIBILL_NARRATIVE_AXIS`` env var for runs where narrative-text quality
+should also count. See spec v3 sections 5 and 6 for the design rationale.
 
 Nothing in this file is a marketing persona. The rubric is a checklist
 inspired by what an IRDAI-aware claims auditor would look at. All gates,
@@ -11,6 +14,7 @@ can point at a specific number and argue with it.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -26,14 +30,31 @@ from medibill.data_generator import (
 # Weights, gates, caps (every number below is listed in spec v3 §5.2)
 # ---------------------------------------------------------------------------
 
-WEIGHTS: dict[str, float] = {
-    "final_correctness":   0.45,
-    "policy_compliance":   0.20,
-    "abstention_quality":  0.15,
-    "process_auditability":0.10,
-    "efficiency":          0.05,
-    "drift_bonus":         0.05,
-}
+# Optional 7th axis (off by default; enable with MEDIBILL_NARRATIVE_AXIS=1).
+# When enabled, takes 0.05 weight from `efficiency` so the headline scores on
+# the existing 4-task suite stay byte-stable in the default configuration.
+_NARRATIVE_ON = os.environ.get("MEDIBILL_NARRATIVE_AXIS", "0").lower() in {"1", "true", "yes"}
+
+WEIGHTS: dict[str, float] = (
+    {
+        "final_correctness":    0.45,
+        "policy_compliance":    0.20,
+        "abstention_quality":   0.15,
+        "process_auditability": 0.10,
+        "efficiency":           0.00,   # transferred to narrative_quality
+        "drift_bonus":          0.05,
+        "narrative_quality":    0.05,
+    }
+    if _NARRATIVE_ON
+    else {
+        "final_correctness":    0.45,
+        "policy_compliance":    0.20,
+        "abstention_quality":   0.15,
+        "process_auditability": 0.10,
+        "efficiency":           0.05,
+        "drift_bonus":          0.05,
+    }
+)
 assert abs(sum(WEIGHTS.values()) - 1.0) < 1e-9, "WEIGHTS must sum to 1.0"
 
 # Gate thresholds
@@ -145,6 +166,11 @@ class MediBillGrader:
             submitted_ids=set(submitted_claim_ids),
             per_claim=per_claim,
         )
+        narrative_raw = (
+            _axis_narrative_quality(per_claim=per_claim, by_entity=by_entity)
+            if _NARRATIVE_ON
+            else 0.0
+        )
 
         # --- applicability: axes that don't apply to this task are N/A
         # (contribute 0 and redistribute their weight across applicable axes).
@@ -152,6 +178,9 @@ class MediBillGrader:
         # drift-free episodes — spec v3 §5.2, Codex review 2026-04-20 finding 2.
         abst_applicable = len(ambiguous_set) > 0
         drift_applicable = bool(drift_events_fired)
+        narrative_applicable = _NARRATIVE_ON and any(
+            c["submitted"] for c in per_claim
+        )
 
         # --- gating ---
         eff_eff = eff_raw if final_raw >= MIN_FINAL_FOR_EFFICIENCY else 0.0
@@ -171,7 +200,9 @@ class MediBillGrader:
             "efficiency":           True,
             "drift_bonus":          drift_applicable,
         }
-        active_weight_sum = sum(WEIGHTS[k] for k, on in applicable.items() if on)
+        if _NARRATIVE_ON:
+            applicable["narrative_quality"] = narrative_applicable
+        active_weight_sum = sum(WEIGHTS.get(k, 0.0) for k, on in applicable.items() if on)
         scale = (1.0 / active_weight_sum) if active_weight_sum > 0 else 1.0
 
         axes: list[AxisScore] = [
@@ -186,6 +217,20 @@ class MediBillGrader:
                             notes=("N/A — no drift events in task" if not drift_applicable
                                    else f"gated on (final+policy)>={DRIFT_BONUS_MIN_FINAL_PLUS_POL}")),
         ]
+        if _NARRATIVE_ON:
+            axes.append(
+                _mk_axis_scaled(
+                    "narrative_quality",
+                    narrative_raw,
+                    narrative_raw if narrative_applicable else 0.0,
+                    scale,
+                    narrative_applicable,
+                    notes=(
+                        "deterministic heuristic; LLM-judge if MEDIBILL_NARRATIVE_LLM=1 and "
+                        "ANTHROPIC_API_KEY set"
+                    ),
+                )
+            )
         base = sum(ax.contribution for ax in axes)
 
         # --- penalties ---
@@ -426,6 +471,129 @@ def _axis_efficiency(budget: float, budget_spent: float) -> float:
     if budget <= 0:
         return 0.0
     return max(0.0, 1.0 - (budget_spent / budget))
+
+
+# ---------------------------------------------------------------------------
+# Optional 7th axis: narrative_quality
+# ---------------------------------------------------------------------------
+
+_CLINICAL_TERMS: frozenset[str] = frozenset({
+    "patient", "diagnosis", "presented", "admitted", "discharge",
+    "evaluation", "management", "treatment", "clinical", "findings",
+    "inpatient", "outpatient", "consultant", "primary", "consistent",
+    "protocol", "examination", "history", "assessment", "follow-up",
+})
+
+
+def _narrative_quality_heuristic(narrative: str, diagnosis_code: str | None) -> float:
+    """Cheap deterministic narrative-quality heuristic.
+
+    Awards credit for: (a) minimum length so the agent can't escape with one
+    word, (b) at least three clinical terms, (c) reference to the claim's
+    diagnosis code (anchors the narrative to the case). Capped at 1.0.
+
+    This is intentionally simple — the goal is to penalise blank narratives
+    and reward agents that fill in something at least loosely tied to the
+    claim. For higher-fidelity scoring, set ``MEDIBILL_NARRATIVE_LLM=1`` and
+    provide ``ANTHROPIC_API_KEY``; the grader then calls Claude Haiku to
+    score the narrative against a clinical-plausibility rubric.
+    """
+    if not narrative or not isinstance(narrative, str):
+        return 0.0
+    length_score = min(1.0, len(narrative.strip()) / 80.0)  # 80+ chars = full
+    text_lower = narrative.lower()
+    term_hits = sum(1 for t in _CLINICAL_TERMS if t in text_lower)
+    term_score = min(1.0, term_hits / 3.0)
+    code_score = (
+        1.0
+        if diagnosis_code and isinstance(diagnosis_code, str)
+        and diagnosis_code.lower() in text_lower
+        else 0.0
+    )
+    return round(0.4 * length_score + 0.4 * term_score + 0.2 * code_score, 4)
+
+
+def _axis_narrative_quality(
+    per_claim: list[dict[str, Any]],
+    by_entity: dict[str, dict[str, Any]],
+) -> float:
+    """Average narrative quality across submitted claims.
+
+    Returns 0.0 if no claim was submitted (the axis is N/A → contributes
+    nothing through the applicability gate).
+    """
+    submitted = [c for c in per_claim if c["submitted"]]
+    if not submitted:
+        return 0.0
+    use_llm = (
+        os.environ.get("MEDIBILL_NARRATIVE_LLM", "0").lower() in {"1", "true", "yes"}
+        and os.environ.get("ANTHROPIC_API_KEY")
+    )
+    if use_llm:
+        try:
+            return _narrative_quality_llm(submitted, by_entity)
+        except Exception:  # noqa: BLE001
+            # Fall back silently to heuristic if API is unreachable.
+            pass
+    scores = []
+    for entry in submitted:
+        eid = entry["_entity_id"]
+        claim = by_entity.get(eid, {})
+        narr = claim.get("diagnosis_narrative", "")
+        dxc = claim.get("diagnosis_code")
+        scores.append(_narrative_quality_heuristic(narr, dxc))
+    return sum(scores) / len(scores) if scores else 0.0
+
+
+def _narrative_quality_llm(
+    submitted: list[dict[str, Any]],
+    by_entity: dict[str, dict[str, Any]],
+) -> float:
+    """LLM-judge variant. Prompts Claude Haiku to score each narrative
+    against a clinical-plausibility rubric on [0.0, 1.0]. Aggregates by mean.
+
+    Requires ``ANTHROPIC_API_KEY`` env var. Costs ~$0.0002 per submitted
+    claim with claude-haiku-4-5; gracefully falls back to the deterministic
+    heuristic if the API call fails. Documented in openenv.yaml under
+    ``grader.optional_llm_judge``.
+    """
+    import anthropic  # type: ignore[import-not-found]
+
+    client = anthropic.Anthropic()
+    rubric = (
+        "Score the following clinical narrative on a 0.0-1.0 scale.\n"
+        "1.0 = clinically plausible, references the diagnosis, mentions "
+        "evaluation or management, professional register.\n"
+        "0.0 = empty / off-topic / nonsense.\n"
+        "Reply with ONLY the float value, no other text."
+    )
+    scores = []
+    for entry in submitted:
+        eid = entry["_entity_id"]
+        claim = by_entity.get(eid, {})
+        narr = (claim.get("diagnosis_narrative") or "").strip()
+        if not narr:
+            scores.append(0.0)
+            continue
+        dxc = claim.get("diagnosis_code") or "(unspecified)"
+        msg = client.messages.create(
+            model="claude-haiku-4-5",
+            max_tokens=10,
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        f"{rubric}\n\nDiagnosis: {dxc}\nNarrative: {narr}\n\nScore:"
+                    ),
+                }
+            ],
+        )
+        text = (msg.content[0].text or "0.0").strip()
+        try:
+            scores.append(max(0.0, min(1.0, float(text))))
+        except ValueError:
+            scores.append(0.0)
+    return sum(scores) / len(scores) if scores else 0.0
 
 
 def _axis_drift_bonus(
