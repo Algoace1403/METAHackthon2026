@@ -1,6 +1,6 @@
 # MediBill-Env: Teaching an LLM Agent That Its World Just Changed
 
-*A Meta × Scaler OpenEnv Hackathon Round 2 submission. Theme 3.1 — Professional World Modeling. Environment + grader + 5-attack exploit gate + SFT v1 → GRPO calibration → SFT v2 (0.996 on hard_drift) all shipped.*
+*A Meta × Scaler OpenEnv Hackathon Round 2 submission. Theme 3.1 — Professional World Modeling. Environment + grader + 5-attack exploit gate + SFT v1 → GRPO calibration → SFT v2 (0.9996 on hard_drift) all shipped.*
 
 ---
 
@@ -10,7 +10,7 @@ That last part is the trap. Insurance policies in India drift constantly: codes 
 
 **MediBill-Env** is an OpenEnv environment that puts an LLM agent into exactly that seat. Five tools, three task tiers, a six-axis deterministic grader, and one mechanic that makes everything else interesting: on hard tasks, the active policy mutates mid-episode without a flag, an event, or a hint. The only way the agent ever learns the rules changed is to call `insurance_lookup` again. And submissions are graded against the policy at submit time — not against whatever the agent thinks is true.
 
-This post is about what we built, what the baselines say, what GRPO told us about reward saturation, and how a smarter teacher took a Qwen 2.5 3B model from **0.0000 → 0.996** on the hardest task tier.
+This post is about what we built, what the baselines say, what GRPO told us about reward saturation, and how a smarter teacher took a Qwen 2.5 3B model from **0.0000 → 0.9996** on the hardest task tier.
 
 > **Quick links:** Repo · [github.com/Algoace1403/METAHackthon2026](https://github.com/Algoace1403/METAHackthon2026) · HF Space (LIVE) · [huggingface.co/spaces/Anuj424614/medibill-env](https://huggingface.co/spaces/Anuj424614/medibill-env) · Colab · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Algoace1403/METAHackthon2026/blob/main/notebooks/sft_quickstart.ipynb) · Spec · [`docs/round2-spec-v3.md`](https://github.com/Algoace1403/METAHackthon2026/blob/main/docs/round2-spec-v3.md)
 
@@ -141,18 +141,18 @@ Every attack policy is at or below the no_op floor (0.079) on `hard_drift`. The 
 
 The `periodic_lookup` exploit is the one that nearly broke the environment. Early in development, an agent that called `insurance_lookup` on every step earned `drift_bonus` cheaply — it always had a fresh lookup before any submit. Fixing it required tightening the bonus gate so it only credits a lookup that *follows* a drift event the agent couldn't have predicted. The gate now passes scripted (0.754) and clamps the polling exploit at 0.069 — well below no_op.
 
-## 6. Training pipeline — three checkpoints to 0.996
+## 6. Training pipeline — three checkpoints to 0.9996
 
 We trained Qwen 2.5 3B Instruct against this environment with Unsloth + HF TRL on Colab. Here is what happened, in order. The headline is at the bottom.
 
-![Training progression on hard_drift: Base 0.0000 → SFT v1 0.7573 → GRPO saturated → SFT v2 0.996](https://raw.githubusercontent.com/Algoace1403/METAHackthon2026/main/docs/img/base_vs_sft.png)
+![Training progression on hard_drift: Base 0.0000 → SFT v1 0.7573 → GRPO saturated → SFT v2 0.9996](https://raw.githubusercontent.com/Algoace1403/METAHackthon2026/main/docs/img/base_vs_sft.png)
 
 | Checkpoint | hard_drift score | Source | What changed |
 |---|---:|---|---|
 | Base Qwen 2.5 3B | **0.0000** | untrained | parse_failures = 0/15. The model produces valid JSON tool calls. It just has no policy reasoning. |
 | SFT v1 | **0.7573** | scripted teacher (`ScriptedHeuristicPolicy`) | Imitates the scripted baseline; matches its structural ceiling within statistical noise. |
 | GRPO over SFT v1 | **0.7575** (Δ ±0.0002) | 5-reward single-step GRPO | Rewards saturated by SFT — calibration finding. |
-| **SFT v2** | **0.996** | drift-aware teacher (`ScriptedDriftAwarePolicy`) | Teacher escalates ambiguous cells + does fresh `insurance_lookup` before every submit. |
+| **SFT v2** | **0.9996** | drift-aware teacher (`ScriptedDriftAwarePolicy`) | Teacher escalates ambiguous cells + does fresh `insurance_lookup` before every submit. |
 
 ### 6.1 Base → SFT v1 — supervised fine-tuning to scripted parity
 
@@ -194,18 +194,18 @@ The diagnosis above pointed at the fix. Instead of writing more reward functions
 
 Local n=30 verification: scripted++ scores **1.000 mean (range 0.991-1.000)** on hard_drift versus the baseline scripted's 0.7568. We then generated 90 new trajectories from this teacher and re-distilled into a fresh LoRA adapter on top of the same Qwen 2.5 3B base.
 
-**Cost:** 90 trajectories × 3 epochs = 1482 training steps, loss 0.42 → 0.011, **33.5 minutes** on a Colab L4 GPU. LoRA r=32. Per-seed hard_drift scores on n=4 held-out: 0.996 ± 0.003. Zero parse failures across 15 episodes.
+**Cost:** 90 trajectories × 3 epochs = 1482 training steps, loss 0.42 → 0.011, **33.5 minutes** on a Colab L4 GPU. LoRA r=32. Per-seed hard_drift scores on n=5 held-out: 1.0000, 1.0000, 1.0000, 1.0000, 0.9979 (mean 0.9996 ± 0.0008). Zero parse failures across 15 episodes.
 
 | Task | Base Qwen 2.5 3B | SFT v2 (LoRA r=32) | Lift |
 |---|---:|---:|---:|
 | `easy_cashless` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
 | `medium_multi_payer` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
-| `hard_drift` | 0.0000 ± 0.0000 | **0.996 ± 0.0008** | **+0.996** |
-| **average** | **0.0000** | **0.999** | **+0.999** |
+| `hard_drift` | 0.0000 ± 0.0000 | **0.9996 ± 0.0008** | **+0.99996** |
+| **average** | **0.0000** | **0.999** | **+0.9999** |
 
 Verified via Codex's reproducibility protocol: sha256 byte-match of adapter weights + fresh-subprocess re-eval × 2. Eval JSONs in `/results/` ([`base_eval_n5.json`](https://github.com/Algoace1403/METAHackthon2026/blob/main/results/base_eval_n5.json), [`sft_eval_n10.json`](https://github.com/Algoace1403/METAHackthon2026/blob/main/results/sft_eval_n10.json), `sft_v2_eval_n5.json`).
 
-![Per-task lift: average +0.999 from base Qwen to SFT v2 across all 3 tiers](https://raw.githubusercontent.com/Algoace1403/METAHackthon2026/main/docs/img/improvement_per_task.png)
+![Per-task lift: average +0.9999 from base Qwen to SFT v2 across all 3 tiers](https://raw.githubusercontent.com/Algoace1403/METAHackthon2026/main/docs/img/improvement_per_task.png)
 
 ### 6.4 The lesson
 
@@ -214,7 +214,7 @@ The actionable takeaway from this work is one sentence. *When RL gets stuck on a
 ## 7. Limitations
 
 - The scripted teacher is still a hand-coded heuristic. SFT v2 inherits its policy; it does not exceed it. A genuine RL improvement (one that finds behaviours the teacher does not) would need either a weaker SFT init (with mistakes RL can correct), or task tiers that fall outside the teacher's distribution.
-- Held-out eval for SFT v2 is n=4 seeds. The hard_drift score (0.996) has tight CI (±0.0008), but scaling to 30+ seeds is a post-hackathon priority.
+- Held-out eval for SFT v2 is n=5 seeds. The hard_drift score (0.9996) has tight CI (±0.0008), but scaling to 30+ seeds is a post-hackathon priority.
 - We trained on a single base model (Qwen 2.5 3B Instruct). Whether the GRPO saturation result generalises to larger bases or different families is open.
 
 ## 8. Try it
@@ -236,9 +236,9 @@ Three commands, three artefacts: a narrated episode that lands at 0.753, a gate 
 
 The interesting question in agent evaluation isn't "can the model fill the form" — rules engines have done that for thirty years. It's "does the model know when its world has changed underneath it." MediBill-Env doesn't answer that question; it asks it cleanly enough that an answer becomes measurable.
 
-The 0.25 drift acceptance gap on `hard_drift` was the target. SFT v1 closed half of it (to 0.7573). GRPO showed us why we couldn't close more by reward shaping alone. SFT v2 closed essentially all of it (0.996) by engineering a smarter teacher. That sequence — base → imitation → reward saturation → teacher upgrade — is, in our view, the most useful thing this submission contributes back to the OpenEnv community: a worked example of *what to try when GRPO gives you a flat gradient.*
+The 0.25 drift acceptance gap on `hard_drift` was the target. SFT v1 closed half of it (to 0.7573). GRPO showed us why we couldn't close more by reward shaping alone. SFT v2 closed essentially all of it (0.9996) by engineering a smarter teacher. That sequence — base → imitation → reward saturation → teacher upgrade — is, in our view, the most useful thing this submission contributes back to the OpenEnv community: a worked example of *what to try when GRPO gives you a flat gradient.*
 
-The repo is up. The Space is live. The grader is one `pip install` away. The notebook reproduces the full result on free-tier Colab. Break it, fork it, push past 0.996.
+The repo is up. The Space is live. The grader is one `pip install` away. The notebook reproduces the full result on free-tier Colab. Break it, fork it, push past 0.9996.
 
 ---
 

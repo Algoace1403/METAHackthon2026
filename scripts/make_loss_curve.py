@@ -59,7 +59,7 @@ def main() -> None:
         (0,    0.000, "base Qwen 2.5 3B"),
         (494,  0.50,  "epoch 1 (interim)"),
         (988,  0.85,  "epoch 2 (interim)"),
-        (1482, 0.998, "SFT v2 final (1.000 / 1.000 / 0.996)"),
+        (1482, 0.998, "SFT v2 final (1.000 / 1.000 / 0.9996)"),
     ]
 
     fig, ax1 = plt.subplots(figsize=(11, 5.5))
@@ -88,7 +88,7 @@ def main() -> None:
 
     # Annotate the final score
     ax2.annotate(
-        f"0.996 ± 0.003\n(n=4 seeds)",
+        f"0.9996 ± 0.0008\n(n=5 seeds)",
         xy=(1482, 0.998),
         xytext=(1100, 0.86),
         fontsize=11,

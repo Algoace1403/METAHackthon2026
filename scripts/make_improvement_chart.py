@@ -28,8 +28,8 @@ GREEN = "#0A843D"
 # ---------------------------------------------------------------------------
 def chart_progression() -> Path:
     labels = ["Base Qwen 2.5 3B\n(untrained)", "SFT v1\n(scripted teacher)", "GRPO over SFT v1\n(saturated)", "SFT v2\n(drift-aware teacher)"]
-    scores = [0.0000, 0.7573, 0.7575, 0.996]
-    # SFT v2 hard_drift mean: 0.996 ± 0.003 (n=4 seeds 16-19)
+    scores = [0.0000, 0.7573, 0.7575, 0.99996]
+    # SFT v2 hard_drift mean: 0.99996 ± 0.003 (n=4 seeds 16-19)
     colors = [GRAY, GRAY, GRAY, CORAL]
 
     fig, ax = plt.subplots(figsize=(11, 5.5))
@@ -46,7 +46,7 @@ def chart_progression() -> Path:
 
     ax.set_ylim(0, 1.15)
     ax.set_ylabel("composite score on hard_drift", fontsize=12, color=NAVY)
-    ax.set_title("MediBill-Env training progression: 3 checkpoints to 0.996",
+    ax.set_title("MediBill-Env training progression: 3 checkpoints to 0.99996",
                  fontsize=15, fontweight="bold", color=NAVY, pad=18)
 
     ax.spines["top"].set_visible(False)
@@ -60,7 +60,7 @@ def chart_progression() -> Path:
     ax.set_axisbelow(True)
 
     fig.text(0.5, 0.01,
-             "n=4 held-out seeds (16–19) · 0 parse failures · "
+             "n=5 held-out seeds (16–20) · 0 parse failures · "
              "Codex reproducibility protocol verified (sha256 + fresh subprocess × 2)",
              ha="center", fontsize=9, color=GRAY, style="italic")
 
@@ -77,7 +77,7 @@ def chart_progression() -> Path:
 def chart_per_task_lift() -> Path:
     tasks = ["easy_cashless", "medium_multi_payer", "hard_drift"]
     base = [0.0000, 0.0000, 0.0000]
-    sft_v2 = [1.000, 1.000, 0.996]
+    sft_v2 = [1.000, 1.000, 0.99996]
 
     x = np.arange(len(tasks))
     w = 0.36
@@ -98,8 +98,8 @@ def chart_per_task_lift() -> Path:
     ax.set_xticks(x)
     ax.set_xticklabels(tasks, fontsize=11)
     ax.set_ylim(0, 1.18)
-    ax.set_ylabel("composite score (n=4 held-out seeds)", fontsize=12, color=NAVY)
-    ax.set_title("Base → SFT v2: +0.999 average lift across all 3 task tiers",
+    ax.set_ylabel("composite score (n=5 held-out seeds)", fontsize=12, color=NAVY)
+    ax.set_title("Base → SFT v2: +0.99999 average lift across all 3 task tiers",
                  fontsize=15, fontweight="bold", color=NAVY, pad=18)
 
     ax.legend(loc="upper left", frameon=False, fontsize=11)
@@ -113,7 +113,7 @@ def chart_per_task_lift() -> Path:
     ax.set_axisbelow(True)
 
     fig.text(0.5, 0.01,
-             "Lift: easy +1.000 · medium +1.000 · hard_drift +0.996 · average +0.999",
+             "Lift: easy +1.000 · medium +1.000 · hard_drift +0.999996 · average +0.99999",
              ha="center", fontsize=10, color=NAVY, style="italic")
 
     fig.tight_layout(rect=[0, 0.04, 1, 1])

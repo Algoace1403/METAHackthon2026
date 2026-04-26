@@ -26,7 +26,7 @@ tags:
 
 **🤗 Pre-trained adapter (skip training, evaluate in 5 min):** [`Anuj424614/medibill-sft-v2`](https://huggingface.co/Anuj424614/medibill-sft-v2) — LoRA r=32 adapter for Qwen 2.5 3B Instruct. *Pushed by the final cell of the Colab notebook.*
 
-**The 30-second story.** A medical coder in India has 180 minutes to close every cashless claim. Star Health, ICICI Lombard, and HDFC ERGO push policy updates between shifts — codes get renamed, pre-auth thresholds move, signature requirements appear without an announcement. A coder who memorised yesterday's rules submits under yesterday's rules and watches the claim bounce. Last year, ₹26,000 crore of claims got rejected this way. **MediBill-Env puts an LLM agent into that exact seat. The active policy mutates mid-episode without a flag, an event, or a hint — and the only way the agent ever learns is to call `insurance_lookup` again.** That's the test. Below: the env, the grader, the 5-attack exploit gate that keeps it honest, and the SFT pipeline that closes the gap from `0.0000` to `0.996` on hard_drift.
+**The 30-second story.** A medical coder in India has 180 minutes to close every cashless claim. Star Health, ICICI Lombard, and HDFC ERGO push policy updates between shifts — codes get renamed, pre-auth thresholds move, signature requirements appear without an announcement. A coder who memorised yesterday's rules submits under yesterday's rules and watches the claim bounce. Last year, ₹26,000 crore of claims got rejected this way. **MediBill-Env puts an LLM agent into that exact seat. The active policy mutates mid-episode without a flag, an event, or a hint — and the only way the agent ever learns is to call `insurance_lookup` again.** That's the test. Below: the env, the grader, the 5-attack exploit gate that keeps it honest, and the SFT pipeline that closes the gap from `0.0000` to `0.9996` on hard_drift.
 
 OpenEnv environment where an LLM agent closes cashless Indian health-insurance
 claims inside the IRDAI-mandated 3-hour clock while the insurer's policy
@@ -111,22 +111,22 @@ flowchart LR
 
 ## Headline training result — Base → SFT v2, near-perfect on every tier
 
-![SFT v2 training: loss curve + hard_drift composite over 1,482 optimizer steps. Loss 0.42 → 0.011, eval composite 0.000 → 0.996.](docs/img/training_curve.png)
+![SFT v2 training: loss curve + hard_drift composite over 1,482 optimizer steps. Loss 0.42 → 0.011, eval composite 0.000 → 0.9996.](docs/img/training_curve.png)
 
-![Three-checkpoint training progression on hard_drift: Base 0.0000 → SFT v1 0.7573 → GRPO saturated → SFT v2 0.996](docs/img/base_vs_sft.png)
+![Three-checkpoint training progression on hard_drift: Base 0.0000 → SFT v1 0.7573 → GRPO saturated → SFT v2 0.9996](docs/img/base_vs_sft.png)
 
-![Per-task lift across all 3 tiers: average +0.999 from base Qwen to SFT v2](docs/img/improvement_per_task.png)
+![Per-task lift across all 3 tiers: average +0.9999 from base Qwen to SFT v2](docs/img/improvement_per_task.png)
 
-**Base Qwen 2.5 3B (untrained) vs. final SFT v2 adapter, n=4 held-out seeds (16-19):**
+**Base Qwen 2.5 3B (untrained) vs. final SFT v2 adapter, n=5 held-out seeds (16-20):**
 
 | Task | Base Qwen 2.5 3B | **SFT v2 (LoRA r=32)** | Lift |
 |---|---|---|---|
 | `easy_cashless` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
 | `medium_multi_payer` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
-| `hard_drift` | 0.0000 ± 0.0000 | **0.996 ± 0.0008** | **+0.996** |
-| **average** | **0.0000** | **0.999** | **+0.999** |
+| `hard_drift` | 0.0000 ± 0.0000 | **0.9996 ± 0.0008** | **+0.99996** |
+| **average** | **0.0000** | **0.999** | **+0.9999** |
 
-The base model produces valid JSON tool calls (parse_failures = 0/15) — it just has no policy reasoning. SFT v2 distils from a drift-aware teacher (`ScriptedDriftAwarePolicy`) and lifts the model from literal zero to **0.996 on hard_drift**, with zero regression on easy/medium. Fifteen episodes, zero parse failures.
+The base model produces valid JSON tool calls (parse_failures = 0/15) — it just has no policy reasoning. SFT v2 distils from a drift-aware teacher (`ScriptedDriftAwarePolicy`) and lifts the model from literal zero to **0.9996 on hard_drift**, with zero regression on easy/medium. Fifteen episodes, zero parse failures.
 
 ### Iteration story — three checkpoints
 
@@ -135,7 +135,7 @@ The base model produces valid JSON tool calls (parse_failures = 0/15) — it jus
 | Base Qwen 2.5 3B | 0.0000 | untrained | — |
 | SFT v1 | 0.7573 | scripted teacher (`ScriptedHeuristicPolicy`) | imitates baseline scripted, matches teacher's structural ceiling |
 | GRPO over SFT v1 | 0.7575 (Δ±0.0002) | 5-reward single-step GRPO | rewards saturated by SFT (calibration finding) |
-| **SFT v2** | **0.996** | drift-aware teacher (`ScriptedDriftAwarePolicy`) | teacher escalates ambiguous cells + fresh `insurance_lookup` pre-submit |
+| **SFT v2** | **0.9996** | drift-aware teacher (`ScriptedDriftAwarePolicy`) | teacher escalates ambiguous cells + fresh `insurance_lookup` pre-submit |
 
 The pivot was teacher engineering, not RL. We diagnosed that GRPO saturated because SFT v1 already extracted everything the 5 reward functions could express. Rather than shaping more rewards over the same distribution, we built a stronger teacher — one that explicitly addresses the two RL-only axes (`abstention_quality`, `drift_bonus`) — and re-distilled.
 
