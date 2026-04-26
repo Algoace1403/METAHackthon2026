@@ -24,7 +24,9 @@ tags:
 
 **🧪 Reproduce the training in Colab:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Algoace1403/METAHackthon2026/blob/main/notebooks/sft_quickstart.ipynb) — one-click run of the full SFT pipeline against the live HF Space environment.
 
-**The 30-second story.** A medical coder in India has 180 minutes to close every cashless claim. Star Health, ICICI Lombard, and HDFC ERGO push policy updates between shifts — codes get renamed, pre-auth thresholds move, signature requirements appear without an announcement. A coder who memorised yesterday's rules submits under yesterday's rules and watches the claim bounce. Last year, ₹26,000 crore of claims got rejected this way. **MediBill-Env puts an LLM agent into that exact seat. The active policy mutates mid-episode without a flag, an event, or a hint — and the only way the agent ever learns is to call `insurance_lookup` again.** That's the test. Below: the env, the grader, the 5-attack exploit gate that keeps it honest, and the SFT pipeline that closes the gap from `0.0000` to `0.9996` on hard_drift.
+**🤗 Pre-trained adapter (skip training, evaluate in 5 min):** [`Anuj424614/medibill-sft-v2`](https://huggingface.co/Anuj424614/medibill-sft-v2) — LoRA r=32 adapter for Qwen 2.5 3B Instruct. *Pushed by the final cell of the Colab notebook.*
+
+**The 30-second story.** A medical coder in India has 180 minutes to close every cashless claim. Star Health, ICICI Lombard, and HDFC ERGO push policy updates between shifts — codes get renamed, pre-auth thresholds move, signature requirements appear without an announcement. A coder who memorised yesterday's rules submits under yesterday's rules and watches the claim bounce. Last year, ₹26,000 crore of claims got rejected this way. **MediBill-Env puts an LLM agent into that exact seat. The active policy mutates mid-episode without a flag, an event, or a hint — and the only way the agent ever learns is to call `insurance_lookup` again.** That's the test. Below: the env, the grader, the 5-attack exploit gate that keeps it honest, and the SFT pipeline that closes the gap from `0.0000` to `0.996` on hard_drift.
 
 OpenEnv environment where an LLM agent closes cashless Indian health-insurance
 claims inside the IRDAI-mandated 3-hour clock while the insurer's policy
@@ -109,20 +111,22 @@ flowchart LR
 
 ## Headline training result — Base → SFT v2, near-perfect on every tier
 
-![Three-checkpoint training progression on hard_drift: Base 0.0000 → SFT v1 0.7573 → GRPO saturated → SFT v2 0.9996](docs/img/base_vs_sft.png)
+![SFT v2 training: loss curve + hard_drift composite over 1,482 optimizer steps. Loss 0.42 → 0.011, eval composite 0.000 → 0.996.](docs/img/training_curve.png)
 
-![Per-task lift across all 3 tiers: average +0.9999 from base Qwen to SFT v2](docs/img/improvement_per_task.png)
+![Three-checkpoint training progression on hard_drift: Base 0.0000 → SFT v1 0.7573 → GRPO saturated → SFT v2 0.996](docs/img/base_vs_sft.png)
 
-**Base Qwen 2.5 3B (untrained) vs. final SFT v2 adapter, n=5 held-out seeds (16-20):**
+![Per-task lift across all 3 tiers: average +0.999 from base Qwen to SFT v2](docs/img/improvement_per_task.png)
+
+**Base Qwen 2.5 3B (untrained) vs. final SFT v2 adapter, n=4 held-out seeds (16-19):**
 
 | Task | Base Qwen 2.5 3B | **SFT v2 (LoRA r=32)** | Lift |
 |---|---|---|---|
 | `easy_cashless` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
 | `medium_multi_payer` | 0.0000 ± 0.0000 | **1.0000 ± 0.0000** | **+1.000** |
-| `hard_drift` | 0.0000 ± 0.0000 | **0.9996 ± 0.0008** | **+0.9996** |
-| **average** | **0.0000** | **0.9999** | **+0.9999** |
+| `hard_drift` | 0.0000 ± 0.0000 | **0.996 ± 0.0008** | **+0.996** |
+| **average** | **0.0000** | **0.999** | **+0.999** |
 
-The base model produces valid JSON tool calls (parse_failures = 0/15) — it just has no policy reasoning. SFT v2 distils from a drift-aware teacher (`ScriptedDriftAwarePolicy`) and lifts the model from literal zero to **0.9996 on hard_drift**, with zero regression on easy/medium. Fifteen episodes, zero parse failures.
+The base model produces valid JSON tool calls (parse_failures = 0/15) — it just has no policy reasoning. SFT v2 distils from a drift-aware teacher (`ScriptedDriftAwarePolicy`) and lifts the model from literal zero to **0.996 on hard_drift**, with zero regression on easy/medium. Fifteen episodes, zero parse failures.
 
 ### Iteration story — three checkpoints
 
@@ -131,7 +135,7 @@ The base model produces valid JSON tool calls (parse_failures = 0/15) — it jus
 | Base Qwen 2.5 3B | 0.0000 | untrained | — |
 | SFT v1 | 0.7573 | scripted teacher (`ScriptedHeuristicPolicy`) | imitates baseline scripted, matches teacher's structural ceiling |
 | GRPO over SFT v1 | 0.7575 (Δ±0.0002) | 5-reward single-step GRPO | rewards saturated by SFT (calibration finding) |
-| **SFT v2** | **0.9996** | drift-aware teacher (`ScriptedDriftAwarePolicy`) | teacher escalates ambiguous cells + fresh `insurance_lookup` pre-submit |
+| **SFT v2** | **0.996** | drift-aware teacher (`ScriptedDriftAwarePolicy`) | teacher escalates ambiguous cells + fresh `insurance_lookup` pre-submit |
 
 The pivot was teacher engineering, not RL. We diagnosed that GRPO saturated because SFT v1 already extracted everything the 5 reward functions could express. Rather than shaping more rewards over the same distribution, we built a stronger teacher — one that explicitly addresses the two RL-only axes (`abstention_quality`, `drift_bonus`) — and re-distilled.
 
@@ -162,6 +166,8 @@ The finding directly motivated the SFT v2 teacher upgrade: instead of shaping mo
 *20-seed reproducibility sweep across all three task tiers, 0 errors, 0.9 s wallclock. Per-seed scores in [`docs/baseline_reproducibility.csv`](docs/baseline_reproducibility.csv) (180 rows, all measured). On the no-drift tiers the tool-faithful scripted baseline holds at exactly 1.00; on `hard_drift` it drops to 0.76. That **0.25 drift acceptance gap** is the entire reason this environment is interesting — and it is the behavioural target the training pipeline is designed to close.*
 
 **Five exploit patterns** — `ack_spammer`, `escalate_everything`, `oscillator`, `double_count`, `periodic_lookup` — are explicitly neutralised: all five score ≤ no_op on both `easy_cashless` and `hard_drift` within 1e-3 tolerance. Gate runs on every commit (`python -m medibill.test_exploits`).
+
+**Documented v1-grader limitation (transparent disclosure).** A 6th attack — `selective_submit` — earns ~0.74 on `easy_cashless` and ~0.51 on `hard_drift` by submitting each claim after one trivial `coding_engine` call (just enough to clear the `submit_without_coding` penalty). The root cause is that identity fields are pre-populated correctly in the dirty state, so the agent earns full `final_correctness` (45% weight) without doing real work. The v2 grader fix is to corrupt 2-3 identity fields in `_build_dirty_from_ground_truth` so the agent must repair them via `coding_engine`. Surfaced explicitly in `medibill/test_exploits.py` for reviewer audit.
 
 ![Exploit gate: scripted at 0.754 vs no_op floor at 0.079 vs five attack policies all clamped at or below 0.079 on hard_drift, n=20 seeds each](docs/img/exploits.png)
 

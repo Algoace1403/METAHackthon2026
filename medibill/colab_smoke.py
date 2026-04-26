@@ -18,7 +18,7 @@ import json
 import sys
 from pathlib import Path
 
-DATASET = Path("datasets/sft_v1.jsonl")
+DATASET = Path("datasets/sft_v2.jsonl")
 EVAL = Path("traces/eval.jsonl")
 
 

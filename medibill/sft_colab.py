@@ -20,9 +20,9 @@ Colab recipe
     %cd /content/METAHackthon2026
     !pip install -e '.[train]'
     !python -m medibill.sft_colab \\
-        --dataset datasets/sft_v1.jsonl \\
+        --dataset datasets/sft_v2.jsonl \\
         --eval traces/eval.jsonl \\
-        --out adapters/sft_v1/
+        --out adapters/sft_v2/
 """
 
 from __future__ import annotations
@@ -196,9 +196,9 @@ def main() -> None:
             "on held-out eval split. Requires CUDA."
         ),
     )
-    parser.add_argument("--dataset", type=Path, default=Path("datasets/sft_v1.jsonl"))
+    parser.add_argument("--dataset", type=Path, default=Path("datasets/sft_v2.jsonl"))
     parser.add_argument("--eval", type=Path, default=Path("traces/eval.jsonl"))
-    parser.add_argument("--out", type=Path, default=Path("adapters/sft_v1/"))
+    parser.add_argument("--out", type=Path, default=Path("adapters/sft_v2/"))
     parser.add_argument("--model", default="Qwen/Qwen2.5-3B-Instruct")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--lr", type=float, default=1e-4)

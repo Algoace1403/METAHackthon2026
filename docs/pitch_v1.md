@@ -72,30 +72,30 @@
 
 ## Slide 5 — Live measurements (2:00–2:30)  ★ HEADLINE SLIDE
 
-**Title:** "Trained from raw base to teacher parity. RL saturates — that's calibration data, not failure."
+**Title:** "Base 0.00 → SFT v2 1.00 / 1.00 / 0.9996. Teacher engineering broke through GRPO saturation."
 
 **Bullets on screen:**
-- 5-bar chart on hard_drift: **base Qwen 0.00** · random 0.11 · no_op 0.08 · scripted 0.76 · **SFT 0.76**
-- **Base → SFT lift across n=5 held-out seeds:**
+- 6-bar chart on hard_drift: **base Qwen 0.00** · random 0.11 · no_op 0.08 · scripted 0.76 · SFT v1 0.76 · **SFT v2 0.9996**
+- **Base → SFT v2 lift across n=5 held-out seeds:**
   - easy_cashless: **0.0000 → 1.0000**  (lift **+1.000**)
   - medium_multi_payer: **0.0000 → 1.0000**  (lift **+1.000**)
-  - hard_drift: **0.0000 → 0.7573**  (lift **+0.7573**)
-- **SFT vs scripted at n=10 held-out seeds, 95% CI** (matches teacher exactly):
-  - easy_cashless: **1.0000 ± 0.0000  vs  1.0000 ± 0.0000**  (Δ 0.000)
-  - medium_multi_payer: **1.0000 ± 0.0000  vs  1.0000 ± 0.0000**  (Δ 0.000)
-  - hard_drift: **0.7573 ± 0.0040  vs  0.7611 ± 0.0049**  (Δ −0.0037, inside noise band)
-- 5 exploit patterns ≤ no_op. GRPO Δ = ±0.0002 — **rewards saturated by SFT**, a calibration finding (see backup).
+  - hard_drift: **0.0000 → 0.9996 ± 0.0008**  (lift **+0.9996**)
+  - **average: 0.0000 → 0.9999  (lift +0.9999)**
+- **3-checkpoint iteration:** SFT v1 (0.76) → GRPO saturated (Δ±0.0002, calibration finding) → **teacher upgrade** → SFT v2 (0.9996)
+- Zero parse failures across 15 episodes. 5 exploits ≤ no_op (gate green).
 
 **Speaker line:**
-"Five bars on hard_drift, left to right: base Qwen 2.5 3B at zero, random at eleven, no-op at eight, scripted at seventy-six, our SFT at seventy-six. The first column matters. Untrained, the 3B model produces valid JSON but scores zero on every task. After SFT, easy and medium hit one-point-zero with zero variance — perfect deterministic match to the teacher — and hard hits zero-point-seven-five-seven, three thousandths inside the scripted teacher's confidence band. We then ran GRPO with five reward functions and observed delta of two ten-thousandths and gradient norms of ten-to-the-minus-seven. That is reward saturation — SFT already extracts everything those rewards signal. It is calibration data about the env's tool-space depth, not training failure. The remaining gap to a perfect score lives on two axes the spec designates RL-only, and the next task tier we add is reward-engineered to create RL headroom."
+"Six bars on hard_drift, left to right: base Qwen at zero, random at eleven, no-op at eight, scripted at seventy-six, SFT v1 at seventy-six, our final SFT v2 at zero-point-nine-nine-nine-six. Untrained the 3B model scores literal zero on every tier with zero parse failures — it can format JSON, it just has no policy reasoning. We trained SFT v1 to scripted-teacher parity at zero-point-seven-six on hard. Then we ran GRPO with five reward functions and observed delta of plus-or-minus two ten-thousandths and gradient norms ten-to-the-minus-seven. That is reward saturation. The diagnosis: SFT extracts everything our rewards can grip on. So we did not shape more rewards. We engineered a stronger teacher — Scripted-plus-plus, which escalates the two ambiguous cells and does a fresh insurance lookup before each submit. Ninety new trajectories, thirty-three minutes of retraining. SFT v2 lands at one-zero-zero on easy and medium, zero-point-nine-nine-nine-six on hard. Average lift base to SFT v2: zero-point-nine-nine-nine-nine."
 
 **Backup / speaker notes (not spoken):**
-- Base eval: 5 seeds × 3 tasks = 15 episodes, all 0.0000, parse_failures = 0, 12.1 min runtime
-- SFT eval: n=10 held-out seeds (16–25) × 3 tasks = 30 trajectories, zero parse failures
-- Training: 681 steps, loss 0.42 → 0.014, LoRA rank 32 on Qwen 2.5 3B, ~90 min on Colab G4
-- 95% CI = 1.96·sd/√n; results at `/results/base_eval_n5.json` and `/results/sft_eval_n10.json`
+- Base eval: 5 seeds × 3 tasks = 15 episodes, all 0.0000, parse_failures = 0, 12.1 min, `/results/base_eval_n5.json`
+- SFT v1 training: 681 steps, loss 0.42 → 0.014, LoRA rank 32 on Qwen 2.5 3B
+- SFT v1 vs scripted (n=10, 95% CI): hard_drift 0.7573 ± 0.0040 vs 0.7611 ± 0.0049 — Δ −0.0037 inside both bands. Parity proof. `/results/sft_eval_n10.json`
+- GRPO finding: 5 reward functions saturated at step 1 because SFT-from-scripted already satisfies them all. `Δ_score = ±0.0002`, grad_norm ~1e-7. Documented in `docs/reward_calibration.md` §5 + `docs/findings.md` Finding 3
+- **SFT v2 teacher: `ScriptedDriftAwarePolicy`** — adds 3 behaviours over baseline scripted: (1) escalate ambiguous cells, (2) fresh `insurance_lookup` before each submit, (3) drift detection via rule comparison + re-code unsubmitted claims. Local n=5 verification: scripted++ scores 0.9983 on hard_drift (vs scripted's 0.7568). Code in `medibill/baselines.py` `class ScriptedDriftAwarePolicy`.
+- SFT v2 training: 1482 steps (3 epochs on 7890 examples), loss 0.011, 33.5 min, LoRA rank 32. Saved at `/content/drive/MyDrive/medibill/adapters/sft_v2/`
+- SFT v2 eval: n=5 held-out seeds × 3 tasks = 15 episodes, zero parse failures, 15.5 min wall, `/results/sft_v2_eval_n5.json`. Per-seed hard_drift: 1.0000, 1.0000, 1.0000, 1.0000, 0.9979.
 - Verified via Codex reproducibility protocol (sha256 byte-match + fresh subprocess × 2)
-- GRPO finding: 5 reward functions saturated at step 1 because SFT-from-scripted already satisfies them all (valid_json ✓, in-schema ✓, no_oscillation ✓, no_repeated_tool ✓, submit_with_coding ✓). `Δ_score = ±0.0002`, grad_norm ~1e-7. Documented in `docs/reward_calibration.md` §5.
 
 ---
 
@@ -108,7 +108,7 @@
 - Two of six axes — `abstention_quality` and `drift_bonus` — are RL-only targets (spec v3 §7.6); GRPO is the planned next step.
 - Code enforces every claim: disjoint partition asserted at import, 5 exploit tests in the repo, prompt-version handshake on the corpus.
 - Theme 3.1 (DataOps Copilot) — closest sub-prize fit: Scaler AI Labs (enterprise reasoning under business rules and regulatory constraints).
-- Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: `[URL after push]`
+- Repo: github.com/Algoace1403/METAHackthon2026 · HF Space: huggingface.co/spaces/Anuj424614/medibill-env (LIVE — `/health` ✓)
 
 **Speaker line:**
 "We submit under Theme 3.1, DataOps Copilot. What ships today: the environment, the six-axis deterministic grader, the silent-drift mechanic, a five-attack exploit suite, a tool-faithful scripted baseline, and a trained SFT adapter that reaches scripted parity on every difficulty tier — the table you saw on slide five. Two axes — abstention and drift_bonus — are RL-only by design; GRPO is the planned next step to break past the teacher. The code enforces everything else: disjoint partition at import, five exploit tests, prompt-version handshake. Closest sub-prize fit on Theme 3.1 is Scaler AI Labs. Repo and Space on screen. Thank you."
